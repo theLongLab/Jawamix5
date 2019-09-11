@@ -55,7 +55,8 @@ public class JAWAMix5 {
 					"\n\tkinship"+
 					"\n\trelationship"+
 					"\n\thdf52csv"+
-					"\n\tsimpel");
+					"\n\tsimpel"+
+					"\n\tsomething_new");
 			System.exit(0);
 		}
 		String function=args[0];
