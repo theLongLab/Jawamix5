@@ -35,7 +35,7 @@ public class FileFunc {
 	}
 	
 	public static HashMap<String, Integer> generate_chr_map(){
-		HashMap<String, Integer> chr2index=new HashMap<String, Integer>();
+		HashMap<String, Integer> chr2index= new HashMap<>();
 		for(int k=1;k<=25;k++){
 			chr2index.put("chr"+k, k);
 			chr2index.put("Chr"+k, k);
@@ -92,7 +92,7 @@ public class FileFunc {
 	}
 	
 	public static HashMap<Character, Integer> allele2index(){
-		HashMap<Character, Integer> allele2index=new HashMap<Character, Integer>();
+		HashMap<Character, Integer> allele2index= new HashMap<>();
 		allele2index.put('A', 0);allele2index.put('a', 0);
 		allele2index.put('C', 1);allele2index.put('c', 1);
 		allele2index.put('G', 2);allele2index.put('g', 2);
@@ -119,7 +119,7 @@ public class FileFunc {
 	}
 	
 	public static ArrayList<Integer> sorted_keys(HashMap<Integer, String> data){
-		ArrayList<Integer> keys=new ArrayList<Integer>();
+		ArrayList<Integer> keys= new ArrayList<>();
 		for(int x: data.keySet()){
 			keys.add(x);
 		}
@@ -127,26 +127,26 @@ public class FileFunc {
 		return keys;
 	}
 	
-	public static int[] arraylist2array(ArrayList<Integer> data){
+	public static int[] arraylist2arrayInteger(ArrayList<Integer> data){
 		int[] out=new int[data.size()];
 		for(int k=0;k<out.length;k++)out[k]=data.get(k);
 		return out;
 	}
 	
-	public static double[] arraylist2array(ArrayList<Double> data){
+	public static double[] arraylist2arrayDouble(ArrayList<Double> data){
 		double[] out=new double[data.size()];
 		for(int k=0;k<out.length;k++)out[k]=data.get(k);
 		return out;
 	}
 	
-	public static String[] arraylist2array(ArrayList<String> data){
+	public static String[] arraylist2arrayString(ArrayList<String> data){
 		String[] out=new String[data.size()];
 		for(int k=0;k<out.length;k++)out[k]=data.get(k);
 		return out;
 	}
 	
 	public static HashMap<String, Integer> generate_map_for_categories(String[] categories){
-		HashMap<String, Integer> map=new HashMap<String, Integer>();
+		HashMap<String, Integer> map= new HashMap<>();
 		for(int i=0;i<categories.length;i++){
 			map.put(categories[i], i);
 		}return map;
@@ -175,7 +175,7 @@ public class FileFunc {
 	}
 	
 	public static HashMap<String, String> generate_map_from_file(String file, int col_key, int col_value, String sep){
-		HashMap<String, String> map =new HashMap<String, String>();
+		HashMap<String, String> map = new HashMap<>();
 		try{
 			BufferedReader br=new BufferedReader(new FileReader(file));
 			String line=br.readLine();
@@ -210,6 +210,7 @@ public class FileFunc {
 		    in.close();
 		    out.close();
 		} catch (IOException e) {
+			//TODO: Add catch message
 		}
 	}
 	
@@ -235,6 +236,7 @@ public class FileFunc {
 		    out.finish();
 		    out.close();
 		} catch (IOException e) {
+			//TODO: Add catch message
 		}
 	}
 	

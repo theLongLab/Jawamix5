@@ -30,7 +30,7 @@ import org.jfree.util.ShapeList;
 public class MyManhattanPlot extends ApplicationFrame{
 
 	 public static Color[] my_faverate_colors={Color.RED,Color.BLUE,Color.ORANGE,Color.GREEN,Color.MAGENTA};	
-//	 public static int[] lengths_of_chrs={30427671,19698289,23459830,18585056,26975502};
+	 public static int[] lengths_of_chrs={30427671,19698289,23459830,18585056,26975502}; //TODO
 	 
 	 public MyManhattanPlot(final String title, String x_lab, String y_lab, int[] series_indicator, 
 	    		double[] x_values, double[] y_values, int width, int hight, String output_file) {
@@ -55,7 +55,7 @@ public class MyManhattanPlot extends ApplicationFrame{
 	    		return null;
 	   	}
 	  	final XYSeriesCollection dataset = new XYSeriesCollection();
-	   	HashMap<Integer, XYSeries> the_series=new HashMap<Integer, XYSeries>();
+	   	HashMap<Integer, XYSeries> the_series= new HashMap<>();
 	   	for(int i=0;i<x_values.length;i++){
 	   		if(the_series.containsKey(series_indicator[i])){
 	  			XYSeries series=the_series.get(series_indicator[i]);

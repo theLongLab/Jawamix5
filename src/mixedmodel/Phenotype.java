@@ -26,15 +26,15 @@ public class Phenotype {
 	boolean NaN_removed=false;
 	
 	public Phenotype(String infile){
-		ArrayList<String> ids=new ArrayList<String>();
-		ArrayList<Double> values=new ArrayList<Double>();
+		ArrayList<String> ids= new ArrayList<>();
+		ArrayList<Double> values= new ArrayList<>();
 		try{
 			BufferedReader br =new BufferedReader(new FileReader(infile));
 			String line=br.readLine();//header
 			this.phe_id= line.split("\t")[1];
 			line=br.readLine();
 			while(line!=null){
-				String temp[] = line.split("\t");
+				String[] temp = line.split("\t");
 				ids.add(temp[0]);
 				if(temp[1].equals("NA")||temp[1].equals("NaN")||temp[1].equals("N")||temp[1].equals("*")){
 					values.add(Double.NaN);
@@ -55,7 +55,7 @@ public class Phenotype {
 	}
 	
 	public void setup_id2index(){
-		this.sample_id2index=new HashMap<String, Integer>();
+		this.sample_id2index= new HashMap<>();
 		for(int i=0;i<this.sample_ids.length;i++)
 			this.sample_id2index.put(this.sample_ids[i], i);
 	}
@@ -129,8 +129,8 @@ public class Phenotype {
 	}
 	
 	public void substract_pedigree_mean_for_NAM(){
-		HashMap<String, Integer> counts=new HashMap<String, Integer>();
-		HashMap<String, Double> sum=new HashMap<String, Double>();
+		HashMap<String, Integer> counts= new HashMap<>();
+		HashMap<String, Double> sum= new HashMap<>();
 		for(int i=0;i<this.sample_ids.length;i++){
 			String pedigree_id=this.sample_ids[i].split("_")[0];
 			myFileFunctions.FileFunc.add2_counts_hashmap(counts, pedigree_id, 1);
@@ -139,7 +139,7 @@ public class Phenotype {
 			String pedigree_id=this.sample_ids[i].split("_")[0];
 			this.values[i]=this.values[i]-sum.get(pedigree_id)/counts.get(pedigree_id);
 		}
-		System.out.println("Finished substracting pedigree mean for NAM: "+this.phe_id);
+		System.out.println("Finished subtracting pedigree mean for NAM: "+this.phe_id);
 	}
 	
 	void remove_NaN(){
@@ -251,7 +251,7 @@ public class Phenotype {
 		double[] full_snp=genotype.load_one_variant_by_location(chr, loc);
 		double[] matched_snp=new double[this.sample_ids.length];
 		double total=0, count=0;
-		HashSet<String> matched=new HashSet<String>();
+		HashSet<String> matched= new HashSet<>();
 		for(int k=0;k<genotype.sample_size;k++){
 			if(this.sample_id2index.containsKey(genotype.sample_ids[k])){
 				matched_snp[this.sample_id2index.get(genotype.sample_ids[k])]=full_snp[k];
@@ -288,7 +288,7 @@ public class Phenotype {
 			for(int round=0;round<this.sample_ids.length;round++){
 				String out_file=folder+"jackknife"+round+".tsv";
 				BufferedWriter bw=new BufferedWriter(new FileWriter(out_file));
-				HashSet<String> removed=new HashSet<String>();
+				HashSet<String> removed= new HashSet<>();
 				if(num==1){
 					removed.add(this.sample_ids[round]);
 				}else{

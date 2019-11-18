@@ -45,24 +45,24 @@ public class SimPEL {
 
 	// input data 
 	VariantsDouble genotype; 
-	//KinshipMatrix kinship; // As IBD check has scaling problem, it is difficult for the users to specify them correct. 
+	//KinshipMatrix kinship; // As IBD check has a scaling problem, it is difficult for the users to specify them correctly.
 	final int ExAC_sample_size=2*60706;
-	HashMap<String, String> id2ethnicity=new HashMap<String, String>();
-	HashMap<String, ArrayList<String>> ethnicity2ids=new HashMap<String, ArrayList<String>>();
-	HashMap<String, String> single_parent=new HashMap<String, String>();
-	HashMap<String, String> both_parents=new HashMap<String, String>();
-	HashMap<String, String> single_sibling=new HashMap<String, String>();
-	HashMap<String, String> multi_siblings=new HashMap<String, String>();
-	HashMap<String, String> gender=new HashMap<String, String>();
+	HashMap<String, String> id2ethnicity= new HashMap<>();
+	HashMap<String, ArrayList<String>> ethnicity2ids= new HashMap<>();
+	HashMap<String, String> single_parent= new HashMap<>();
+	HashMap<String, String> both_parents= new HashMap<>();
+	HashMap<String, String> single_sibling= new HashMap<>();
+	HashMap<String, String> multi_siblings= new HashMap<>();
+	HashMap<String, String> gender= new HashMap<>();
  	int[][] candidate_genes; // #genes x 3
- 	ArrayList<String> candidate_gene_names=new ArrayList<String>();
+ 	ArrayList<String> candidate_gene_names= new ArrayList<>();
 	int[][] all_genes; // #genes x 3
 	ArrayList<Mutation>[] candidate_muts; // #genes x #muts
 	Mutation[] mutations;
 	double[][] annotation_score; // #chr x #(annotable locs)
 	
 	// supporting data structure during the analysis
-	//boolean[] all_labels;		
+	// boolean[] all_labels;
 	double[] causal_real_scores; // size=this.heterogeneity
 	int[] causal_index_in_candidate_genes;  // size=this.heterogeneity
 	int[] causal_index_in_all_genes;	 // size=this.heterogeneity
@@ -117,6 +117,8 @@ public class SimPEL {
 			
 			// tmp_folder
 			String tmp_files_folder){
+
+
 		this.start=System.currentTimeMillis();
 		// analytic parameters	
 		this.score_weight=score_weight;
@@ -153,7 +155,7 @@ public class SimPEL {
 			// read in candidate genes file			
 			BufferedReader br_g=new BufferedReader(new FileReader(candidate_genes_file)); // candidate genes
 			String line_g = br_g.readLine();
-			ArrayList<int[]> candidate_genes_array=new ArrayList<int[]>();
+			ArrayList<int[]> candidate_genes_array= new ArrayList<>();
 			while(line_g!=null){
 				String[] tmp=line_g.split("\t");
 				int[] this_region=new int[3]; // chr, start, end
@@ -173,7 +175,7 @@ public class SimPEL {
 			// read in all genes file
 			br_g=new BufferedReader(new FileReader(gencode_file));
 		    line_g=br_g.readLine();
-		    ArrayList<int[]> all_genes_array=new ArrayList<int[]>();
+		    ArrayList<int[]> all_genes_array= new ArrayList<>();
 			while(line_g!=null){
 				String[] tmp=line_g.split("\t");
 				int[] this_region=new int[3]; // chr, start, end
@@ -253,7 +255,7 @@ public class SimPEL {
 				System.out.println("Generating temporary annotation files.");
 				(new File(tmp_files_folder)).mkdirs();
 				BufferedReader br=new BufferedReader(new FileReader(annotation_file));
-				HashMap<Integer, BufferedWriter> bws=new HashMap<Integer, BufferedWriter>();
+				HashMap<Integer, BufferedWriter> bws= new HashMap<>();
 				String line=br.readLine();
 				while(line!=null){
 					if(!line.startsWith("#")){
@@ -283,7 +285,7 @@ public class SimPEL {
 	 */
 	
 	public void generate_relationship_tables(String KG_ethnicity_family_file){
-		HashMap<String, String> gender_coding=new HashMap<String, String>();
+		HashMap<String, String> gender_coding= new HashMap<>();
 		gender_coding.put("1", "/Male"); gender_coding.put("2", "/Female");
 		try{
 			BufferedReader br_e=new BufferedReader(new FileReader(KG_ethnicity_family_file)); // 
@@ -297,7 +299,7 @@ public class SimPEL {
 						ArrayList<String> current_group=this.ethnicity2ids.get(tmp[6]+gender_coding.get(tmp[4]));
 						current_group.add(tmp[1]);
 					}else{
-						ArrayList<String> current_group=new ArrayList<String>();
+						ArrayList<String> current_group= new ArrayList<>();
 						current_group.add(tmp[1]);
 						this.ethnicity2ids.put(tmp[6]+gender_coding.get(tmp[4]), current_group);
 					}
@@ -320,7 +322,7 @@ public class SimPEL {
 						this.single_parent.put(tmp[1], tmp[2]);
 					}
 					if(!tmp[8].equals("0")){ //there is sibling(s)
-						String sibs[]=tmp[8].split(", ");
+						String[] sibs =tmp[8].split(", ");
 						String multi_sibs=""; int multi_sibs_found=0;
 						for(int k=0;k<sibs.length;k++){
 							if(this.gender.containsKey(sibs[k]) && (!tmp[1].equals(sibs[k])) && this.gender.get(sibs[k]).equals("1")
@@ -344,7 +346,7 @@ public class SimPEL {
 						this.single_parent.put(tmp[1], tmp[3]);
 					}
 					if(!tmp[8].equals("0")){ //there is sibling(s)
-						String sibs[]=tmp[8].split(", ");
+						String[] sibs =tmp[8].split(", ");
 						String multi_sibs=""; int multi_sibs_found=0;
 						for(int k=0;k<sibs.length;k++){
 							if(this.gender.containsKey(sibs[k]) && (!tmp[1].equals(sibs[k])) && this.gender.get(sibs[k]).equals("2")
@@ -373,14 +375,14 @@ public class SimPEL {
 	 *  are above the specified allele count, i.e., common in healthy population 	   
 	 */
 	public void generate_mut_table(String ExAC_sites, String annotation_file, int AC_cutoff){
-		HashMap<String, Integer> in_region_locs=new HashMap<String, Integer>();
+		HashMap<String, Integer> in_region_locs= new HashMap<>();
 		for(int k=0;k<this.candidate_genes.length;k++){
 			for(int loc=this.candidate_genes[k][1];loc<=this.candidate_genes[k][2];loc++){
 				String the_loc=this.candidate_genes[k][0]+"_"+loc;
 				in_region_locs.put(the_loc,k);
 			}			
 		}System.out.println("Loc_table formed: "+in_region_locs.size()+" locs");
-		HashSet<String> avoid_muts=new HashSet<String>();
+		HashSet<String> avoid_muts= new HashSet<>();
 		try{
 			// record avoid list in the regions.
 			//BufferedWriter bw=new BufferedWriter(new FileWriter(annotation_file+".inregion.unknown.txt"));
@@ -437,7 +439,7 @@ public class SimPEL {
 		this.causal_index_in_all_genes=new int[this.heterogeneity]; // clear the index in previous simulation
 		this.causal_real_scores=new double[this.heterogeneity]; // clear the score assigned last time! 
 		// randomly select one or multiple (size=this.heterogeneity) causal genes in the candidate list.  
-		HashSet<Integer> gene_indexes_set=new HashSet<Integer>();
+		HashSet<Integer> gene_indexes_set= new HashSet<>();
 		for(int hg=0;hg<this.heterogeneity;hg++){
 			causal_index_in_candidate_genes[hg]=(int)(Test.randomNumber()*this.candidate_genes.length);
 			if(causal_index_in_candidate_genes[hg]==this.candidate_genes.length)causal_index_in_candidate_genes[hg]--;
@@ -450,7 +452,7 @@ public class SimPEL {
 			gene_indexes_set.add(causal_index_in_candidate_genes[hg]);
 		}		
 		// generate cases/controls:
-		HashSet<Integer> used_indexes=new HashSet<Integer>();
+		HashSet<Integer> used_indexes= new HashSet<>();
 		// generate samples that are multi_sibling controls
 		Object[] indi_w_msibs=this.multi_siblings.keySet().toArray();
 		int total_msibs=indi_w_msibs.length;
@@ -481,7 +483,7 @@ public class SimPEL {
 						System.out.println("No sufficient siblings in the population panel: "
 								+ "\nplease change to a larger panel that contains sufficient number of large families.");
 						System.exit(0);
-					};
+					}
 				}											
 				this.sim_case_indexes[i]=case_index_in_all_samples;
 				this.sim_control_indexes[i]=control_index_in_all_samples1;
@@ -589,7 +591,7 @@ public class SimPEL {
 			System.out.println("No sufficient individuals in the population: please change to a larger pool.");
 		}else{
 			// initiate the number of indis in each ethic group.
-			HashMap<String, Integer> ethnicity_num=new HashMap<String, Integer>();
+			HashMap<String, Integer> ethnicity_num= new HashMap<>();
 			for(String it:ethnicity2ids.keySet()){
 				ethnicity_num.put(it, ethnicity2ids.get(it).size());
 			}
@@ -627,7 +629,7 @@ public class SimPEL {
 		for(int case_index=0;case_index<num_case;case_index++){
 			int indi_index=this.sim_case_indexes[case_index];
 			//assign a causal gene for this case. 	the_gene_index_in_causal \in {0,1,...,heterogeneity-1}
-			// 										the_gene_index \in {0,1,...,canidate_genes.length-1}
+			// 										the_gene_index \in {0,1,...,candidate_genes.length-1}
 			int the_gene_index_in_causal=(int)(Test.randomNumber()*heterogeneity);
 			if(the_gene_index_in_causal==heterogeneity)the_gene_index_in_causal--;
 			int the_gene_index=this.causal_index_in_candidate_genes[the_gene_index_in_causal];
@@ -1007,7 +1009,7 @@ public class SimPEL {
 				ann_score_confidence, genes_file_known, compound_het, 
 				expected_causal_maf, impact_expected_causal_maf, impact_expected_gxe, 
 				tmp_working);
-		ap.test_power(round, num_top_gene, report_file);;
+		ap.test_power(round, num_top_gene, report_file);
 		System.out.println("Time used:"+(System.currentTimeMillis()-start)/1000);
 	}
 

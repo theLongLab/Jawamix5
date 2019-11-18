@@ -161,9 +161,9 @@ public class Simulator {
 				index++;
 			}
 		}
-		ArrayList<Integer>[] useful=new ArrayList[chr_num]; 
+		ArrayList<Integer>[] useful=new ArrayList[chr_num];
 		for(int chr=0;chr<chr_num;chr++){
-			useful[chr]=new ArrayList<Integer>();
+			useful[chr]= new ArrayList<>();
 		}
 		for(int i=0;i<num_var_needed;i++){
 			int the_selected_index=(int)(Test.randomNumber()*total_candidates);
@@ -176,7 +176,7 @@ public class Simulator {
 		}
 		this.causal_variants=new int[chr_num][];
 		for(int chr=0;chr<chr_num;chr++){
-			this.causal_variants[chr]=myFileFunctions.FileFunc.arraylist2array(useful[chr]);
+			this.causal_variants[chr]=myFileFunctions.FileFunc.arraylist2arrayInteger(useful[chr]);
 		}
 	}
 	
@@ -190,7 +190,7 @@ public class Simulator {
 			this.causal_variants[chr]= this.qualified_variants[chr].clone();
 		}
 		int total_candidates=this.qualified_variants[chr].length;
-		ArrayList<Integer> useful=new ArrayList<Integer>(); 
+		ArrayList<Integer> useful= new ArrayList<>();
 		for(int i=0;i<num_var_needed;i++){
 			int the_selected_index=(int)(Test.randomNumber()*total_candidates);
 			if(the_selected_index==total_candidates)the_selected_index--;
@@ -200,7 +200,7 @@ public class Simulator {
 			}
 			useful.add(this.qualified_variants[chr][the_selected_index]);			
 		}
-		this.causal_variants[chr]= myFileFunctions.FileFunc.arraylist2array(useful);
+		this.causal_variants[chr]= myFileFunctions.FileFunc.arraylist2arrayInteger(useful);
 	}
 	
 	public void output_causal(String output_causal_file){

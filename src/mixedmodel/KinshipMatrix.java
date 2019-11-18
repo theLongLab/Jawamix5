@@ -29,10 +29,11 @@ public class KinshipMatrix {
 	public RealMatrix kinship_matrix;
 	//public double[][] kinship_matrix_array;
 	public String[] ids;
-	public HashMap<String, Integer> ids2indexes=new HashMap<String, Integer>();
-	
-	public void assign_ids2indexes(){
-		for(int k=0;k<ids.length;k++)this.ids2indexes.put(ids[k],k);
+	public HashMap<String, Integer> ids2indexes= new HashMap<>();
+
+	// CHECKED - PATHUM
+	public void assign_ids2indexes() {
+		for (int k = 0; k < ids.length; k++) this.ids2indexes.put(ids[k], k);
 	}
 	
 	public KinshipMatrix(VariantsDouble genotype){					
@@ -247,67 +248,80 @@ public class KinshipMatrix {
 	/*
 	 * reads kinship from file, while assuming the ids are the first line of the file. 
 	 */
-	public KinshipMatrix(String kinship_file){		
-		String[] separators={","," ","\t"};
-		String sep=null;
-		try{			
-			BufferedReader br= new BufferedReader(new FileReader(kinship_file));
-			String line=br.readLine();//header
-			int sample_size=0;
-			for(int k=0;k<separators.length;k++){
-				int the_len=line.split(separators[k]).length;
-				if( the_len > sample_size){
-					sep=separators[k];
-					sample_size=the_len;
+	// CHECKED - PATHUM
+	public KinshipMatrix(String kinship_file) {
+		String[] separators = {",", " ", "\t"};
+		String sep = null;
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(kinship_file));
+			String line = br.readLine();//header
+			int sample_size = 0;
+			for (int k = 0; k < separators.length; k++) {	// Identifies the separator as the separator which causes
+				// the most number of splits
+				int the_len = line.split(separators[k]).length;
+				if (the_len > sample_size) {
+					sep = separators[k];
+					sample_size = the_len;
 				}
-			}			
-			double[][] kinship=new double[sample_size][sample_size];
-			this.ids=line.split(sep);
-			line=br.readLine();
-			int line_index=0;
-			while(line!=null){
-				String[] temp=line.split(sep);
-				for(int k=0;k<temp.length;k++){
-					kinship[line_index][k]=Double.parseDouble(temp[k]);
-				}line_index++;
-				line=br.readLine();
 			}
-			if(line_index!=ids.length){
-				System.out.println("Kinship file number of line wrong!");
+
+			double[][] kinship = new double[sample_size][sample_size];
+			this.ids = line.split(sep);
+			line = br.readLine();
+			int line_index = 0;
+			while (line != null) {
+				String[] temp = line.split(sep);
+				for (int k = 0; k < temp.length; k++) {
+					kinship[line_index][k] = Double.parseDouble(temp[k]);
+				}
+				line_index++;
+				line = br.readLine();
 			}
-			this.kinship_matrix=new Array2DRowRealMatrix(kinship, false);
+			if (line_index != ids.length) {
+				System.out.println("There appears to be something wrong with the number of lines in this kinship file!");
+			}
+			this.kinship_matrix = new Array2DRowRealMatrix(kinship, false);
 			//this.kinship_matrix_array=kinship;
 			this.assign_ids2indexes();
-		}catch(Exception e){e.printStackTrace();}		
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 
 	/*
 	 * S_new=(n-1)S/Tr(PSP), where P= I-11'/n and 1 is the vector of ones.  
 	 */
-	public void re_scale_kinship_matrix(){
-		double[][] S=this.kinship_matrix.getData();
-		int n=S.length;
-		double[][] S_new=new double[n][n];		
-		DenseDoubleMatrix2D matrix_P= new DenseDoubleMatrix2D(n,n);
-		matrix_P.assign(-1.0/n);
-		for(int i=0;i<n;i++){
-			matrix_P.setQuick(i, i, (1.0-1.0/n));
+	// TODO: Find reference for calculation
+	public void re_scale_kinship_matrix() {
+		double[][] S = this.kinship_matrix.getData();
+		int n = S.length;
+		double[][] S_new = new double[n][n];
+		DenseDoubleMatrix2D matrix_P = new DenseDoubleMatrix2D(n, n);
+
+		matrix_P.assign(-1.0 / n);
+
+		for (int i = 0; i < n; i++) {
+			matrix_P.setQuick(i, i, (1.0 - 1.0 / n));
 		}
-		DenseDoubleMatrix2D matrix_S= new DenseDoubleMatrix2D(S);
-		DenseDoubleMatrix2D PS= new DenseDoubleMatrix2D(n,n);
-		DenseDoubleMatrix2D PSP= new DenseDoubleMatrix2D(n,n);
-		matrix_P.zMult(matrix_S,PS);
+
+		DenseDoubleMatrix2D matrix_S = new DenseDoubleMatrix2D(S);
+		DenseDoubleMatrix2D PS = new DenseDoubleMatrix2D(n, n);
+		DenseDoubleMatrix2D PSP = new DenseDoubleMatrix2D(n, n);
+		matrix_P.zMult(matrix_S, PS);
 		PS.zMult(matrix_P, PSP);
-		double trace=0;
-		for(int k=0;k<n;k++)	trace+=PSP.get(k, k);
-		System.out.println("Rescale coef="+(n-1)/trace);
-		for(int i=0;i<n;i++){
-			for(int j=0;j<n;j++){
-				S_new[i][j]=S[i][j]*(n-1)/trace;
+
+		double trace = 0;
+		for (int k = 0; k < n; k++) trace += PSP.get(k, k);
+		System.out.println("Rescale coef= " + (n - 1) / trace);
+
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				S_new[i][j] = S[i][j] * (n - 1) / trace;
 			}
 		}
-		this.kinship_matrix=new Array2DRowRealMatrix(S_new, false);
+
+		this.kinship_matrix = new Array2DRowRealMatrix(S_new, false);
 	}
 	
 	/*
@@ -394,9 +408,9 @@ public class KinshipMatrix {
 		}
 		return (new Array2DRowRealMatrix(S_new, false));
 	}
-	
-	public static void re_scale_kinship_matrix(String in_kinship_file, String out_kinship_file){
-		KinshipMatrix old=new KinshipMatrix(in_kinship_file);
+
+	public static void re_scale_kinship_matrix(String in_kinship_file, String out_kinship_file) {
+		KinshipMatrix old = new KinshipMatrix(in_kinship_file);
 		old.re_scale_kinship_matrix();
 		old.write2file(out_kinship_file);
 	}

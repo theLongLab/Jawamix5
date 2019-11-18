@@ -21,7 +21,7 @@ public class LocalKinshipAnalyzer {
 	int[][][] gene_coordinates; // chr x num_of_genes_per_chr x 2[start, end]
 	String[][] gene_ids; 	// chr x num_of_genes_per_chr
 	double[][] global_kinship;
-//	public static int[] lengths_of_chrs={30427671,19698289,23459830,18585056,26975502};
+	//	public static int[] lengths_of_chrs={30427671,19698289,23459830,18585056,26975502};
 	
 	/*
 	 * Constructor.
@@ -30,78 +30,91 @@ public class LocalKinshipAnalyzer {
 	 * 
 	 * the chr has to be numbered as "1","2,"... instead of strings like "Chr1" etc.
 	 */
-	public LocalKinshipAnalyzer(String hdf5_file, int win_size, String gene_file){
-		try{
-			this.variants=new VariantsDouble(hdf5_file);
-			this.tiling_win_size=win_size;
-			if(gene_file!=null){
-				BufferedReader br=new BufferedReader(new FileReader(gene_file));
-			}			
-		}catch(Exception e){e.printStackTrace();}
+
+	public LocalKinshipAnalyzer(String hdf5_file, int win_size, String gene_file) {
+		try {
+			this.variants = new VariantsDouble(hdf5_file);
+			this.tiling_win_size = win_size;
+			if (gene_file != null) {
+				BufferedReader br = new BufferedReader(new FileReader(gene_file));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/*
-	 * This is just a template of doing anything that need to go through the tiling windows.
+	 * This is just a template of doing anything that needs to go through the tiling windows.
 	 */
-	public void go_through_tiling_windows(){
-		try{
-//			BufferedWriter bw=new BufferedWriter(new FileWriter(outfile));
-			for(int chr=0;chr<variants.num_chrs;chr++){
-				int last_position=variants.locations[chr][variants.num_sites[chr]-1];
-				int start=1, end=tiling_win_size;
-				while(start<last_position){
-					double[][] data=variants.load_variants_in_region(chr, start, end);					
-					for(int k=0;k<data.length;k++){
+	public void go_through_tiling_windows() {
+		try {
+			//BufferedWriter bw = new BufferedWriter(new FileWriter(outfile));
+			for (int chr = 0; chr < variants.num_chrs; chr++) {
+				int last_position = variants.locations[chr][variants.num_sites[chr] - 1];
+				int start = 1, end = tiling_win_size;
+				while (start < last_position) {
+					double[][] data = variants.load_variants_in_region(chr, start, end);
+					for (int k = 0; k < data.length; k++) {
 						//do something
 					}
-					start=start+tiling_win_size/2;
-					end=start+tiling_win_size-1;
+					start = start + tiling_win_size / 2;
+					end = start + tiling_win_size - 1;
 				}
 			}//bw.close();
-		}catch(Exception e){e.printStackTrace();}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/*
 	 * calculate local-kinship 
 	 * scale = the biggest difference between genotypes.
 	 */
-	public void calculating_kinship_tiling_windows(String output_folder, double scale){		
-		System.out.println("Local_kinship for win-size="+tiling_win_size+".");
-		try{
-			for(int chr=0;chr<variants.num_chrs;chr++){
-				int last_position=variants.locations[chr][variants.num_sites[chr]-1];
-				int start=1, end=start+tiling_win_size-1;
-				while(start<last_position){
-					double[][] data=variants.load_variants_in_region(chr, start, end);
-					String the_kin_file=output_folder+"kinship."+variants.sample_size+".chr"
-							+(chr+1)+"."+start+"."+end;
-					BufferedWriter bw=new BufferedWriter(new FileWriter(the_kin_file+".raw.ibs"));
-					double[][] kinship=new double[variants.sample_size][variants.sample_size];
-					for(int i=0;i<variants.sample_size;i++){
-						kinship[i][i]=1;
-						for(int j=i+1;j<variants.sample_size;j++){
-							for(int k=0;k<data.length;k++){
-								kinship[i][j]+=(scale-Math.abs(data[k][i]-data[k][j]));
+	// TODO: Use of tiled window kinship matrices?
+	public void calculating_kinship_tiling_windows(String output_folder, double scale) {
+		System.out.println("Local_kinship for win-size= " + tiling_win_size + ".");
+		try {
+			for (int chr = 0; chr < variants.num_chrs; chr++) {
+				int last_position = variants.locations[chr][variants.num_sites[chr] - 1];
+				int start = 1, end = start + tiling_win_size - 1;
+				while (start < last_position) {
+					double[][] data = variants.load_variants_in_region(chr, start, end);
+					String the_kin_file = output_folder + "kinship." + variants.sample_size + ".chr"
+							+ (chr + 1) + "." + start + "." + end;
+					BufferedWriter bw = new BufferedWriter(new FileWriter(the_kin_file + ".raw.ibs"));
+					double[][] kinship = new double[variants.sample_size][variants.sample_size];
+					for (int i = 0; i < variants.sample_size; i++) {
+						kinship[i][i] = 1;
+						for (int j = i + 1; j < variants.sample_size; j++) {
+							for (int k = 0; k < data.length; k++) {
+								kinship[i][j] += (scale - Math.abs(data[k][i] - data[k][j]));
 							}
-							kinship[i][j]=kinship[i][j]/scale/data.length;
-							kinship[j][i]=kinship[i][j];
+							kinship[i][j] = kinship[i][j] / scale / data.length;
+							kinship[j][i] = kinship[i][j];
 						}
 					}
-					for(int i=0;i<variants.sample_size-1;i++){
-						bw.write(variants.sample_ids[i]+",");
-					}bw.write(variants.sample_ids[variants.sample_size-1]+"\n");
-					for(int i=0;i<variants.sample_size;i++){
-						for(int j=0;j<variants.sample_size-1;j++){
-							bw.write(kinship[i][j]+",");
-						}bw.write(kinship[i][variants.sample_size-1]+"\n");
+
+					for (int i = 0; i < variants.sample_size - 1; i++) {
+						bw.write(variants.sample_ids[i] + ",");
+					}
+					bw.write(variants.sample_ids[variants.sample_size - 1] + "\n");
+
+					for (int i = 0; i < variants.sample_size; i++) {
+						for (int j = 0; j < variants.sample_size - 1; j++) {
+							bw.write(kinship[i][j] + ",");
+						}
+						bw.write(kinship[i][variants.sample_size - 1] + "\n");
 					}
 					bw.close();
-					KinshipMatrix.re_scale_kinship_matrix(the_kin_file+".raw.ibs", the_kin_file+".rescaled.ibs");
-					start=start+tiling_win_size/2;
-					end=start+tiling_win_size-1;
+
+					KinshipMatrix.re_scale_kinship_matrix(the_kin_file + ".raw.ibs", the_kin_file + ".rescaled.ibs");
+					start = start + tiling_win_size / 2;
+					end = start + tiling_win_size - 1;
 				}
 			}
-		}catch(Exception e){e.printStackTrace();}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void local_VO_wins(Phenotype phenotype, String genotype_hdf5_file, String global_kinship_file, String local_kinship_folder,
