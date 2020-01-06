@@ -6,11 +6,11 @@ In	its	first	release,	we	provide	9 functions.
 ## Contents
 1. [Installation](#installation)
 2. [Functions](#functions)
-3. [Commands and Options](#commands-and-options)
-4. [Input/output	file formats](#input//output-file-formats)
-5. [Information	for	Developers](#information-for-developers)
+3. [Commands and Options](#commandsandoptions)
+4. [Input/output	file formats](#inputoutputfile-formats)
+5. [Information	for	Developers](#informationfordevelopers)
 6. [Contacts](#contacts)
-7. [Copyright](#copyright-license:-(mit))
+7. [Copyright](#copyrightlicensemit)
 8. [Acknowledgements](#acknowledgements)
 9. [References](#references)
 
