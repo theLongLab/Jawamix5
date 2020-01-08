@@ -396,7 +396,7 @@ public class JAWAMix5 {
 				double p_after_corr=1000, maf_threshold_plot=0.05;
 				int phe_index=-1, min_sample_size=100, round=1;
 				boolean plot=true;
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-ip"))input_pheno=args[k+1];
@@ -411,14 +411,79 @@ public class JAWAMix5 {
 				}if(input_geno==null||input_pheno==null|| kinship==null||output_folder==null){
 					System.out.println("Input or output can't be null!");
 				}else{
-					if(phe_index==-1)
+					if (phe_index == -1) {
 						//TODO: Add check for output folder existing and create if not
-						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size, 
+						System.out.println("Starting timing...");
+						long start_time = System.nanoTime();
+						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 								maf_threshold_plot, plot);
-					else{
+						long end_time = System.nanoTime();
+						System.out.println("Time taken for EMMA without OCMA: " + ((end_time - start_time) / 1000000000.0) + " seconds");
+					} else {
 						//TODO: Add check for output folder existing and create if not
-						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size, 
+						System.out.println("Starting timing...");
+						long start_time = System.nanoTime();
+						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 								phe_index, maf_threshold_plot, plot);
+						long end_time = System.nanoTime();
+						System.out.println("Time taken for EMMA without OCMA: " + ((end_time - start_time) / 1000000000.0) + " seconds");
+					}
+				}
+			}
+
+		} else if (function.equals("emmax_ocma")) {
+			if (args.length == 1) {
+				//TODO: Add description of format of phenotype file expected
+				System.out.println("Run EMMAX for phenotype(s) with OCMA.");
+				System.out.println("Usage: \n\t<-ig\tinput_genotype_file>\n\t" +
+						"<-ip\tphenotype_file>\n\t" +
+						"<-o\toutput_folder>\n\t" +
+						"<-ik\tkinship_file>\n\t" +
+						"[-p\t<pvalue_after_multi.correct.> (df=1000)]\n\t" +
+						"[-index\t<phenotype_index> (df=ALL, start from zero)]\n\t" +
+						"[-min_size\t<min_sample_size> (df=100)]\n\t" +
+						"[-maf\t<maf_threshold_plot> (df=0.05)]\n\t" +
+						"[-plot\t<1|0> (df=1)]");
+				System.exit(0);
+			} else {
+				String input_geno = "", input_pheno = null, output_folder = null, kinship = null;
+				double p_after_corr = 1000, maf_threshold_plot = 0.05;
+				int phe_index = -1, min_sample_size = 100, round = 1;
+				boolean plot = true;
+				for (int k = 1; k < args.length; k++) {
+					if (args[k].startsWith("-")) {
+						if (args[k].equals("-ig")) input_geno = args[k + 1];
+						else if (args[k].equals("-ip")) input_pheno = args[k + 1];
+						else if (args[k].equals("-ik")) kinship = args[k + 1];
+						else if (args[k].equals("-o")) output_folder = args[k + 1];
+						else if (args[k].equals("-index")) phe_index = Integer.parseInt(args[k + 1]);
+						else if (args[k].equals("-p")) p_after_corr = Double.parseDouble(args[k + 1]);
+						else if (args[k].equals("-min_size")) min_sample_size = Integer.parseInt(args[k + 1]);
+						else if (args[k].equals("-maf")) maf_threshold_plot = Double.parseDouble(args[k + 1]);
+						else if (args[k].equals("-plot")) {
+							if (args[k + 1].equals("0")) plot = false;
+						}
+					}
+				}
+				if (input_geno == null || input_pheno == null || kinship == null || output_folder == null) {
+					System.out.println("Input or output can't be null!");
+				} else {
+					if (phe_index == -1) {
+						//TODO: Add check for output folder existing and create if not
+						System.out.println("Starting timing...");
+						long start_time = System.nanoTime();
+						EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
+								maf_threshold_plot, plot);
+						long end_time = System.nanoTime();
+						System.out.println("Time taken for EMMA with OCMA: " + ((end_time - start_time) / 1000000000.0) + " seconds");
+					} else {
+						//TODO: Add check for output folder existing and create if not
+						System.out.println("Starting timing...");
+						long start_time = System.nanoTime();
+						EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
+								phe_index, maf_threshold_plot, plot);
+						long end_time = System.nanoTime();
+						System.out.println("Time taken for EMMA with OCMA: " + ((end_time - start_time) / 1000000000.0) + " seconds");
 					}
 				}
 			}
@@ -427,8 +492,8 @@ public class JAWAMix5 {
 			//#####################################################################################
 			// emmax_stepwise Function Initialization
 			//#####################################################################################
-		}else if(function.equals("emmax_stepwise")){
-			if(args.length==1){
+		} else if (function.equals("emmax_stepwise")) {
+			if (args.length == 1) {
 				//TODO: Add description of format of phenotype file expected
 				System.out.println("Run EMMAX-based stepwise regression for phenotype(s).");
 				System.out.println("Usage: \n\t<-ig\tinput_genotype_file>\n\t" +
@@ -447,7 +512,7 @@ public class JAWAMix5 {
 				double p_after_corr=1000, maf_threshold_plot=0.05;
 				int phe_index=-1, min_sample_size=100, round=2;
 				boolean plot=true;
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-ip"))input_pheno=args[k+1];
@@ -464,10 +529,10 @@ public class JAWAMix5 {
 					System.out.println("Input or output can't be null!");
 				}else{
 					if(phe_index==-1)
-						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size, 
+						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 								maf_threshold_plot, plot);
 					else{
-						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size, 
+						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 								phe_index, maf_threshold_plot, plot);
 					}
 				}
@@ -493,7 +558,7 @@ public class JAWAMix5 {
 				String input_geno="", input_pheno= null, output_file=null, kinship=null;
 				int[] chrs=null, locs=null;
 				int phe_index=0;
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-ip"))input_pheno=args[k+1];
@@ -503,7 +568,7 @@ public class JAWAMix5 {
 						else if(args[k].equals("-chr")){
 							String[] string_chrs=args[k+1].split("-");
 							chrs=new int[string_chrs.length];
-							for(int kk=0;kk<chrs.length;kk++)chrs[kk]=Integer.parseInt(string_chrs[kk]);
+							for(int kk=0; kk<chrs.length; kk++)chrs[kk]=Integer.parseInt(string_chrs[kk]);
 						}else if(args[k].equals("-locations")){
 							String[] string_locs=args[k+1].split("-");
 							if(string_locs.length!=chrs.length){
@@ -512,7 +577,7 @@ public class JAWAMix5 {
 								System.exit(0);
 							}
 							locs=new int[string_locs.length];
-							for(int kk=0;kk<locs.length;kk++)locs[kk]=Integer.parseInt(string_locs[kk]);
+							for(int kk=0; kk<locs.length; kk++)locs[kk]=Integer.parseInt(string_locs[kk]);
 						}
 					}
 				}if(input_geno==null||input_pheno==null|| output_file==null || kinship==null ||chrs==null||locs==null){
@@ -538,10 +603,10 @@ public class JAWAMix5 {
 						"[-index\t<phenotype_index> (df=0)]\n");
 				System.exit(0);
 			}else{
-				String input_geno="", input_pheno= null, output_file=null; 
+				String input_geno="", input_pheno= null, output_file=null;
 				int[] chrs=null, locs=null;
 				int phe_index=0;
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-ip"))input_pheno=args[k+1];
@@ -550,7 +615,7 @@ public class JAWAMix5 {
 						else if(args[k].equals("-chr")){
 							String[] string_chrs=args[k+1].split("-");
 							chrs=new int[string_chrs.length];
-							for(int kk=0;kk<chrs.length;kk++)chrs[kk]=Integer.parseInt(string_chrs[kk]);
+							for(int kk=0; kk<chrs.length; kk++)chrs[kk]=Integer.parseInt(string_chrs[kk]);
 						}else if(args[k].equals("-locations")){
 							String[] string_locs=args[k+1].split("-");
 							if(string_locs.length!=chrs.length){
@@ -559,7 +624,7 @@ public class JAWAMix5 {
 								System.exit(0);
 							}
 							locs=new int[string_locs.length];
-							for(int kk=0;kk<locs.length;kk++)locs[kk]=Integer.parseInt(string_locs[kk]);
+							for(int kk=0; kk<locs.length; kk++)locs[kk]=Integer.parseInt(string_locs[kk]);
 						}
 					}
 				}if(input_geno==null||input_pheno==null|| output_file==null || chrs==null||locs==null){
@@ -590,7 +655,7 @@ public class JAWAMix5 {
 				String input_geno="", input_pheno=null, output_folder=null;
 				double p_after_corr=1000, maf_threshold_plot=0.05;
 				int phe_index=-1, min_sample_size=100, round=2;
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-ip"))input_pheno=args[k+1];
@@ -600,7 +665,7 @@ public class JAWAMix5 {
 						else if(args[k].equals("-p"))p_after_corr=Double.parseDouble(args[k+1]);
 						else if(args[k].equals("-min_size"))min_sample_size=Integer.parseInt(args[k+1]);
 						else if(args[k].equals("-maf"))maf_threshold_plot=Double.parseDouble(args[k+1]);
-						
+
 					}
 				}if(input_geno==null||input_pheno==null|| output_folder==null){
 					System.out.println("Input or output can't be null!");
@@ -633,7 +698,7 @@ public class JAWAMix5 {
 				double p_after_corr=1000, maf_threshold_plot=0.05;
 				int phe_index=-1, min_sample_size=100;
 				final int round=1;
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-ip"))input_pheno=args[k+1];
@@ -677,13 +742,13 @@ public class JAWAMix5 {
 				System.exit(0);
 			}else{
 				String input_geno=null, input_pheno=null, output_folder=null, input_region=null,
-						local_kinship_files_folder=null, global_kinship_file=null; 
+						local_kinship_files_folder=null, global_kinship_file=null;
 				int win_size=-1;
 				int the_phe_index=-1, min_sample_size=40;
 				double step=0.01;
 				boolean plot=true;
 				String method="transform";
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-ip"))input_pheno=args[k+1];
@@ -695,13 +760,12 @@ public class JAWAMix5 {
 						else if(args[k].equals("-index"))the_phe_index=Integer.parseInt(args[k+1]);
 						else if(args[k].equals("-min_size"))min_sample_size=Integer.parseInt(args[k+1]);
 						else if(args[k].equals("-step"))step=Double.parseDouble(args[k+1]);
-						else if(args[k].equals("-plot")){if(args[k+1].equals("0"))plot=false;}
-						else if(args[k].equals("-ir"))input_region=args[k+1];						
+						else if(args[k].equals("-plot")){if(args[k+1].equals("0"))plot=false;} else if(args[k].equals("-ir"))input_region=args[k+1];
 					}
-				}if(input_geno==null||input_pheno==null|| output_folder==null 
+				}if(input_geno==null||input_pheno==null|| output_folder==null
 						||global_kinship_file==null || (win_size==-1 && input_region==null)){
 					System.out.println("Window size or input or output can't be null!");
-					
+
 				}else{
 					LocalKinshipAnalyzer local_k=new LocalKinshipAnalyzer(input_geno, win_size, null);
 					MultiPhenotype phenotypeS=new MultiPhenotype(input_pheno);
@@ -709,14 +773,13 @@ public class JAWAMix5 {
 						System.out.println("Running all phenotypes? It is suggested to specify a phenotype index. " +
 								"Otherwise it may be slow." +
 								"\nLet us have a try!");
-						for(int phe_index=0;phe_index<phenotypeS.num_of_pheno;phe_index++){
+						for(int phe_index=0; phe_index<phenotypeS.num_of_pheno; phe_index++){
 							if(input_region==null){
 								String out_phe_file = output_folder+"Local_VO."+phe_index+"."+phenotypeS.phenotypes[phe_index].phe_id+
-									".w"+win_size+".csv";
-								local_k.local_VO_wins(phenotypeS.phenotypes[phe_index], input_geno, global_kinship_file, 
-									local_kinship_files_folder, out_phe_file, step, plot, method, min_sample_size);
-							}
-							else{
+										".w"+win_size+".csv";
+								local_k.local_VO_wins(phenotypeS.phenotypes[phe_index], input_geno, global_kinship_file,
+										local_kinship_files_folder, out_phe_file, step, plot, method, min_sample_size);
+							} else{
 								String out_phe_file=output_folder+"Local_VO."+phe_index+"."+phenotypeS.phenotypes[phe_index].phe_id+".r"+".csv";
 								local_k.local_VO_regions(phenotypeS.phenotypes[phe_index], input_geno, global_kinship_file, input_region,
 										out_phe_file, plot, min_sample_size);
@@ -757,10 +820,10 @@ public class JAWAMix5 {
 				System.exit(0);
 			}else{
 				String input_geno=null, input_pheno=null, output_folder=null, input_compound=null,
-						compound_kinship_files_folder=null, global_kinship_file=null; 
+						compound_kinship_files_folder=null, global_kinship_file=null;
 				int the_phe_index=-1, min_sample_size=40;
 				boolean plot=true;
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-ip"))input_pheno=args[k+1];
@@ -769,13 +832,12 @@ public class JAWAMix5 {
 						else if(args[k].equals("-o"))output_folder=args[k+1];
 						else if(args[k].equals("-index"))the_phe_index=Integer.parseInt(args[k+1]);
 						else if(args[k].equals("-min_size"))min_sample_size=Integer.parseInt(args[k+1]);
-						else if(args[k].equals("-plot")){if(args[k+1].equals("0"))plot=false;}
-						else if(args[k].equals("-ic"))input_compound=args[k+1];						
+						else if(args[k].equals("-plot")){if(args[k+1].equals("0"))plot=false;} else if(args[k].equals("-ic"))input_compound=args[k+1];
 					}
-				}if(input_geno==null||input_pheno==null|| output_folder==null 
+				}if(input_geno==null||input_pheno==null|| output_folder==null
 						||global_kinship_file==null || input_compound==null){
 					System.out.println("input or output can't be null!");
-					
+
 				}else{
 					CompoundAnalyzer local_k=new CompoundAnalyzer(input_geno, input_compound);
 					MultiPhenotype phenotypeS=new MultiPhenotype(input_pheno);
@@ -783,13 +845,13 @@ public class JAWAMix5 {
 						System.out.println("Running all phenotypes? It is suggested to specify a phenotype index. " +
 								"Otherwise it may be slow." +
 								"\nLet us have a try!");
-						for(int phe_index=0;phe_index<phenotypeS.num_of_pheno;phe_index++){
+						for(int phe_index=0; phe_index<phenotypeS.num_of_pheno; phe_index++){
 							String out_phe_file=output_folder+"Compound_VO."+phe_index+"."+phenotypeS.phenotypes[phe_index].phe_id+".r"+".csv";
 							local_k.compound_VO(phenotypeS.phenotypes[phe_index], input_geno, global_kinship_file, out_phe_file, plot, min_sample_size);
 						}
 					}else{
-						String out_phe_file=output_folder+"Compound_VO."+the_phe_index+"."+phenotypeS.phenotypes[the_phe_index].phe_id+".csv";						
-						local_k.compound_VO(phenotypeS.phenotypes[the_phe_index], input_geno, global_kinship_file, out_phe_file, plot, min_sample_size);						
+						String out_phe_file=output_folder+"Compound_VO."+the_phe_index+"."+phenotypeS.phenotypes[the_phe_index].phe_id+".csv";
+						local_k.compound_VO(phenotypeS.phenotypes[the_phe_index], input_geno, global_kinship_file, out_phe_file, plot, min_sample_size);
 					}
 				}
 			}
@@ -817,11 +879,11 @@ public class JAWAMix5 {
 						"[-dist\t<distance2region>(df=100000)]");
 				System.exit(0);
 			}else{
-				String input_geno=null, input_pheno=null, output_prefix=null, kinship_file=null, input_single_marker_results_file=null, 
+				String input_geno=null, input_pheno=null, output_prefix=null, kinship_file=null, input_single_marker_results_file=null,
 						input_region_file=null;
 				double ld_threshold=0.8, rare_threshold=0.01, synthetic_pvalue_threshold=0.00001, synthetic_maf_threhold=0.1;
 				int the_phe_index=-1, distance2region=100000;
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-ip"))input_pheno=args[k+1];
@@ -833,7 +895,7 @@ public class JAWAMix5 {
 						else if(args[k].equals("-dist"))distance2region=Integer.parseInt(args[k+1]);
 						else if(args[k].equals("-ld"))ld_threshold=Double.parseDouble(args[k+1]);
 						else if(args[k].equals("-rare"))rare_threshold=Double.parseDouble(args[k+1]);
-						else if(args[k].equals("-syn_pvalue"))synthetic_pvalue_threshold=Double.parseDouble(args[k+1]);						
+						else if(args[k].equals("-syn_pvalue"))synthetic_pvalue_threshold=Double.parseDouble(args[k+1]);
 						else if(args[k].equals("-syn_maf"))synthetic_maf_threhold=Double.parseDouble(args[k+1]);
 					}
 				}if(input_geno==null||input_pheno==null|| kinship_file==null||output_prefix==null || input_single_marker_results_file==null
@@ -842,16 +904,16 @@ public class JAWAMix5 {
 				}else{
 					MultiPhenotype phenotypeS=new MultiPhenotype(input_pheno);
 					if(the_phe_index==-1)
-						for(int phe_index=0;phe_index<phenotypeS.num_of_pheno;phe_index++){
-							RareAnalyzerSynthetic rare_analyzer=new RareAnalyzerSynthetic(input_single_marker_results_file, 
-									synthetic_pvalue_threshold, synthetic_maf_threhold, 
+						for(int phe_index=0; phe_index<phenotypeS.num_of_pheno; phe_index++){
+							RareAnalyzerSynthetic rare_analyzer=new RareAnalyzerSynthetic(input_single_marker_results_file,
+									synthetic_pvalue_threshold, synthetic_maf_threhold,
 									input_geno, input_region_file, distance2region, phenotypeS.phenotypes[phe_index], kinship_file,
 									ld_threshold, rare_threshold);
 							rare_analyzer.rare_association_4in1(rare_threshold, output_prefix);
 						}
 					else{
-						RareAnalyzerSynthetic rare_analyzer=new RareAnalyzerSynthetic(input_single_marker_results_file, 
-								synthetic_pvalue_threshold, synthetic_maf_threhold, 
+						RareAnalyzerSynthetic rare_analyzer=new RareAnalyzerSynthetic(input_single_marker_results_file,
+								synthetic_pvalue_threshold, synthetic_maf_threhold,
 								input_geno, input_region_file, distance2region, phenotypeS.phenotypes[the_phe_index], kinship_file,
 								ld_threshold, rare_threshold);
 						rare_analyzer.rare_association_4in1(rare_threshold, output_prefix);
@@ -882,7 +944,7 @@ public class JAWAMix5 {
 				double rare_threshold=0.01;
 				int win_size=50000;
 				int the_phe_index=-1;
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-ip"))input_pheno=args[k+1];
@@ -898,14 +960,14 @@ public class JAWAMix5 {
 				}else{
 					MultiPhenotype phenotypeS=new MultiPhenotype(input_pheno);
 					if(the_phe_index==-1)
-						for(int phe_index=0;phe_index<phenotypeS.num_of_pheno;phe_index++){
+						for(int phe_index=0; phe_index<phenotypeS.num_of_pheno; phe_index++){
 							RareAnalyzerAggregate rare_analyzer=new RareAnalyzerAggregate(input_geno, input_region_file, phenotypeS.phenotypes[phe_index], kinship_file,
-									 rare_threshold);
+									rare_threshold);
 //							rare_analyzer.rare_association(rare_threshold, output_prefix);
 						}
 					else{
 						RareAnalyzerAggregate rare_analyzer=new RareAnalyzerAggregate(input_geno, input_region_file, phenotypeS.phenotypes[the_phe_index], kinship_file,
-								 rare_threshold);
+								rare_threshold);
 //						rare_analyzer.rare_association(rare_threshold, output_prefix);
 					}
 				}
@@ -920,7 +982,7 @@ public class JAWAMix5 {
 			if(args.length<10){
 				System.out.println("Usage: \n\t"
 						+"<-p\tlist of RIL_pedigreee files folder>\n\t"
-						+ "<-c\tCross_ID>\n\t" 
+						+ "<-c\tCross_ID>\n\t"
 						+ "<-fg\tfounder whole genome genotype file>\n\t"
 						+"<-ril\tRIL phenotype>\n\t"
 						+ "<-o\tOutput-prefix>\n\t"
@@ -928,35 +990,35 @@ public class JAWAMix5 {
 						+"[-index\tphenotype_index (df=ALL, start from zero)]\n\t"
 						+"[-r\tround (df=2)]\n\t"
 						+"[-p\tpvalue_after_multi.correction (df=1000)]\n\t"
-						+"[-maf\tmaf_threshold_plot (df=0.05)]\n\t");			
+						+"[-maf\tmaf_threshold_plot (df=0.05)]\n\t");
 				System.exit(0);
-			}						
-			String pedigreefiles_folder =null;	
+			}
+			String pedigreefiles_folder =null;
 			String crossid =null;
 			String RILpheno =null;
-			String geno250k =null;	
+			String geno250k =null;
 			String output_prefix=null;
 			int block_size=5000, the_phe_index=-1;
-			
+
 			double p_after_corr=1000;
-			double maf_threshold_plot=0.05; 
+			double maf_threshold_plot=0.05;
 			int round=2;
-			for(int k=0; k<args.length;k++){
+			for(int k=0; k<args.length; k++){
 				if(args[k].startsWith("-")){
 					if(args[k].equals("-p")) pedigreefiles_folder=args[k+1];
 					else if(args[k].equals("-c"))  crossid=args[k+1];
 					else if(args[k].equals("-ril")) RILpheno=args[k+1];
 					else if(args[k].equals("-fg")) geno250k=args[k+1];
-					else if(args[k].equals("-o"))  output_prefix=args[k+1];	
-					else if(args[k].equals("-b"))  block_size=Integer.parseInt(args[k+1]);	
+					else if(args[k].equals("-o"))  output_prefix=args[k+1];
+					else if(args[k].equals("-b"))  block_size=Integer.parseInt(args[k+1]);
 					else if(args[k].equals("-index"))the_phe_index=Integer.parseInt(args[k+1]);
 					else if(args[k].equals("-p"))p_after_corr=Double.parseDouble(args[k+1]);
-					//TODO: "-p" argument used twice. Better to avoid repetition?
+						//TODO: "-p" argument used twice. Better to avoid repetition?
 					else if(args[k].equals("-r"))round=Integer.parseInt(args[k+1]);
 					else if(args[k].equals("-maf"))maf_threshold_plot=Double.parseDouble(args[k+1]);
-				}			
+				}
 			}if(pedigreefiles_folder==null||crossid==null||RILpheno==null||geno250k==null||output_prefix==null){
-				System.out.println("Input or output paths can't be empty!");				
+				System.out.println("Input or output paths can't be empty!");
 				System.exit(0);
 			}
 			VariantsDouble.run_nam_imputation(pedigreefiles_folder, crossid, RILpheno, geno250k, output_prefix, block_size);
@@ -971,9 +1033,9 @@ public class JAWAMix5 {
 				System.exit(0);
 			}else{
 				String input_geno=null, output_csv=null;
-				for(int k=1;k<args.length;k++){
+				for(int k=1; k<args.length; k++){
 					if(args[k].startsWith("-")){
-						if(args[k].equals("-ig"))input_geno=args[k+1];						
+						if(args[k].equals("-ig"))input_geno=args[k+1];
 						else if(args[k].equals("-o"))output_csv=args[k+1];
 						else System.out.println("Option "+args[k]+" is undefined.");
 					}
@@ -984,8 +1046,7 @@ public class JAWAMix5 {
 					genotype.output2csv(output_csv);
 				}
 			}
-		}
-		else{
+		} else{
 			System.out.println("Did you make a typo? \""+function+"\" is not a supported function. Please try again.");
 			System.exit(0);
 		}

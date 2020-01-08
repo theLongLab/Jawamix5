@@ -24,6 +24,7 @@ import nam.Founder;
 import nam.Imputation;
 import nam.RILs;
 
+
 //import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 
 import ch.systemsx.cisd.base.mdarray.MDDoubleArray;
@@ -931,6 +932,7 @@ public class VariantsDouble {
             double[][] total_num_var_used = new double[this.sample_size][this.sample_size];
             for (int chr = 0; chr < this.num_chrs; chr++) {
                 for (HDF5MDDataBlock<MDDoubleArray> block : this.position_fast_blocks[chr]) {
+                    double start_time = System.nanoTime();
                     double[][] data4thisblock = block.getData().toMatrix();
                     for (int var_index = 0; var_index < data4thisblock.length; var_index++) {
                         if (KinshipMatrix.maf(data4thisblock[var_index], scale) < min_MAF) continue;
@@ -943,6 +945,8 @@ public class VariantsDouble {
                             }
                         }
                     }
+                    double end_time = System.nanoTime();
+                    System.out.println("Time taken for 1 block in chr " + chr + ": " + ((end_time - start_time) / 1000000000));
                 }
                 System.out.println("Finished Chr" + (chr + 1));
             }
@@ -966,6 +970,8 @@ public class VariantsDouble {
             }
             bw.close();
             System.out.println("Global kinship (before rescale) has been written to " + output_file);
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -973,39 +979,23 @@ public class VariantsDouble {
 
     public void calculate_raw_ibs_kinship_multithreaded(String output_file, double scale, double min_MAF) {
         try {
+            KinshipMatrixMultiThreaded Kinship_Matrix_Thread = new KinshipMatrixMultiThreaded(this.sample_size);
 
-            double[][][] kinship = new double[this.num_chrs][this.sample_size][this.sample_size];
-            double[][][] total_num_var_used = new double[this.num_chrs][this.sample_size][this.sample_size];
-
-            int num_of_threads = KinshipMatrixMultiThreaded.number_of_cores() - 1;
-            if (num_of_threads <= 0) num_of_threads = 1;
-            ExecutorService es = Executors.newFixedThreadPool(num_of_threads);
+            ExecutorService es = Executors.newFixedThreadPool(1);
 
             for (int chr = 0; chr < this.num_chrs; chr++) {
-                KinshipMatrixMultiThreaded Kinship_Matrix_Thread = new KinshipMatrixMultiThreaded(this, chr, scale, min_MAF, kinship[chr], total_num_var_used[chr]);
-                es.execute(Kinship_Matrix_Thread);
+                KinshipMultiCalculator kM = new KinshipMultiCalculator(chr, position_fast_blocks[chr], scale, min_MAF, this.sample_size, Kinship_Matrix_Thread);
+                es.execute(kM);
             }
             es.shutdown();
             while (!es.isTerminated()) {
             }
 
-            double[][] final_kinship = new double[this.sample_size][this.sample_size];
-            double[][] final_total_num_var_used = new double[this.sample_size][this.sample_size];
-
-            for (int i = 0; i < this.num_chrs; i++) {
-                for (int j = 0; j < this.sample_size; j++) {
-                    for (int k = 0; k < this.sample_size; k++) {
-                        final_kinship[j][k] += kinship[i][j][k];
-                        final_total_num_var_used[j][k] += total_num_var_used[i][j][k];
-                    }
-                }
-            }
-
             for (int i = 0; i < sample_size; i++) {
-                final_kinship[i][i] = 1;
+                Kinship_Matrix_Thread.kinship[i][i] = 1;
                 for (int j = i + 1; j < sample_size; j++) {
-                    final_kinship[i][j] = final_kinship[i][j] / (final_total_num_var_used[i][j] * scale);
-                    final_kinship[j][i] = final_kinship[i][j];
+                    Kinship_Matrix_Thread.kinship[i][j] = Kinship_Matrix_Thread.kinship[i][j] / (Kinship_Matrix_Thread.total_num_var_used[i][j] * scale);
+                    Kinship_Matrix_Thread.kinship[j][i] = Kinship_Matrix_Thread.kinship[i][j];
                 }
             }
             BufferedWriter bw = new BufferedWriter(new FileWriter(output_file));
@@ -1015,9 +1005,9 @@ public class VariantsDouble {
             bw.write(this.sample_ids[sample_size - 1] + "\n");
             for (int i = 0; i < sample_size; i++) {
                 for (int j = 0; j < sample_size - 1; j++) {
-                    bw.write(kinship[i][j] + ",");
+                    bw.write(Kinship_Matrix_Thread.kinship[i][j] + ",");
                 }
-                bw.write(kinship[i][sample_size - 1] + "\n");
+                bw.write(Kinship_Matrix_Thread.kinship[i][sample_size - 1] + "\n");
             }
             bw.close();
             System.out.println("Global kinship (before rescale) has been written to " + output_file);
