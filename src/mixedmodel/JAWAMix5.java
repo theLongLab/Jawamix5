@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 
+import Region_Emmax.Region_EMMAX;
 import nam.Cross_info;
 import nam.Founder;
 import nam.Imputation;
@@ -341,10 +342,11 @@ public class JAWAMix5 {
 						"[-index\t<phenotype_index> (df=ALL, start from zero)]\n\t" +
 						"[-min_size\t<min_sample_size> (df=100)]\n\t" +
 						"[-maf\t<maf_threshold_plot> (df=0.05)]\n\t"+
-						"[-plot\t<1|0> (df=1)]");
+						"[-plot\t<1|0> (df=1)]" + 
+						"[-ri\t<region infomation in format: r0 chr start end> (require pheno_index)]");
 				System.exit(0);
 			}else{
-				String input_geno="", input_pheno=null, output_folder=null, kinship=null;
+				String input_geno="", input_pheno=null, output_folder=null, kinship=null, region_info=null;
 				double p_after_corr=1000, maf_threshold_plot=0.05;
 				int phe_index=-1, min_sample_size=100, round=1;
 				boolean plot=true;
@@ -358,7 +360,8 @@ public class JAWAMix5 {
 						else if(args[k].equals("-p"))p_after_corr=Double.parseDouble(args[k+1]);
 						else if(args[k].equals("-min_size"))min_sample_size=Integer.parseInt(args[k+1]);
 						else if(args[k].equals("-maf"))maf_threshold_plot=Double.parseDouble(args[k+1]);
-						else if(args[k].equals("-plot")){if(args[k+1].equals("0"))plot=false;}
+						else if(args[k].equals("-plot")){if(args[k+1].equals("0"))plot=false;
+						else if(args[k].equals("-ri"))region_info=args[k+1];}
 					}
 				}if(input_geno==null||input_pheno==null|| kinship==null||output_folder==null){
 					System.out.println("Input or output can't be null!");
@@ -367,8 +370,14 @@ public class JAWAMix5 {
 						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size, 
 								maf_threshold_plot, plot);
 					else{
-						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size, 
-								phe_index, maf_threshold_plot, plot);
+						if(region_info==null) {
+							EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size, 
+									phe_index, maf_threshold_plot, plot);
+						}else {
+							int[][][] region = Region_EMMAX.read_regions_from_file(region_info);
+							EMMAX.emmax_analysis_regions(input_geno, input_pheno, kinship, output_folder, 
+									p_after_corr, min_sample_size, phe_index, maf_threshold_plot, plot, region);
+						}
 					}
 				}
 			}
