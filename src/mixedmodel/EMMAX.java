@@ -1,8 +1,11 @@
 package mixedmodel;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -158,8 +161,8 @@ public class EMMAX {
 					+"; Transform="+emma.phenotype.transform_approach+"(P="+emma.phenotype.normality_pvaule+")"+
 					"; Phenotype="+emma.phenotype.phe_id+"; GenotypeFile="+genotype_hdf5_file+"\n");
 			double[][] Xs_ori=new double[emma.sample_size][num_snp+1];
-			for(int k=1;k<=num_snp;k++){				
-				double[] the_full_list=emma.genotype.load_one_variant_by_location(chrs[k]-1, locs[k]);
+			for(int k=1;k<=num_snp;k++){	// why the k starts from 1 not 0?			
+				double[] the_full_list=emma.genotype.load_one_variant_by_location(chrs[k]-1, locs[k]);//if there are two SNPs, chrs[0],chr[1] have values not chrs[2]
 				for(int sample_index=0; sample_index<emma.sample_size; sample_index++){
 					Xs_ori[sample_index][k] = the_full_list[emma.indexes_with_phenotype_in_genotype[sample_index]];
 				}
@@ -183,6 +186,7 @@ public class EMMAX {
 			bw.close();															
 		}catch(Exception e){e.printStackTrace();}		
 	}
+	
 	
 	public static Regional_Results run_stepwise_for_one_region(double pvalue_threshold, EMMA emma, 
 			double maf_plot_threshold, String genotype_hdf5_file, int round, int chr, int start_loc, 
@@ -333,17 +337,18 @@ public class EMMAX {
 			}			
 			bw.close();
 			if(plot) make_plot_one_phen(single_marker_outfile,maf_plot_threshold);
+			//default value of round is 2
 			if(round>=2){				 
 				// set the initial variant
 				AssociationResults candidates=new AssociationResults(single_marker_outfile, corrected_threshold, maf_plot_threshold);
 				candidates.generating_indexes(emma.genotype);
 				int[] best_markers_indexes=new int[round];
-				int[] best_markers_chrs=new int[round];
+				int[] best_markers_chrs=new int[round];//2 rounds, 2 values; [0] is the candidates.chr, [1] is generate by EMMAX.reg2results_emmax
 				int[] best_markers_locs=new int[round];		
 //				OLSMultipleLinearRegression best_reg=null;
 				double[] var_explained=new double[round];
 				int best_P_index=0;
-				// find the best P-value
+				// find the best P-value, go step by step for candidate variants, find the P-value less than candidates.AsjustedR2
 				double best_var=0;
 				for(int var_index=0;var_index<candidates.num_of_var;var_index++){
 					if(Double.compare(best_var, candidates.AdjustedR2[var_index])<0){
@@ -351,7 +356,7 @@ public class EMMAX {
 						best_P_index=var_index;
 					}
 				}
-				HashSet<Integer> best_indexes_set =new HashSet<Integer>();
+				HashSet<Integer> best_indexes_set =new HashSet<Integer>(); //
 				best_markers_indexes[0]=best_P_index;
 				var_explained[0]=candidates.AdjustedR2[best_P_index];
 				best_indexes_set.add(best_P_index);
@@ -359,15 +364,15 @@ public class EMMAX {
 				best_markers_locs[0]=candidates.location[best_P_index];				
 				for(int round_index=2; round_index<=round;round_index++){
 					// prepare the array including existing best markers
-					double[][] Xs_ori=new double[emma.sample_size][round_index+1];
+					double[][] Xs_ori=new double[emma.sample_size][round_index+1]; //[sample_size][3]
 					for(int k=1;k<round_index;k++){
 						int chr=best_markers_chrs[k-1], location=best_markers_locs[k-1];
 						double[] the_full_list=emma.genotype.load_one_variant_by_location(chr, location);
 						for(int sample_index=0; sample_index<emma.sample_size; sample_index++){
 							Xs_ori[sample_index][k] = the_full_list[emma.indexes_with_phenotype_in_genotype[sample_index]];
-						}
+						}//[sample_size][1]; Xs_ori[sample_size][0] = ?, 
 					}
-					double[][] Xs_after=new double[emma.sample_size][round_index+1];						
+					double[][] Xs_after=new double[emma.sample_size][round_index+1];//[sample_size][3]						
 					for(int i=0;i<emma.sample_size;i++){
 						Xs_after[i][0]=intsept[i];
 						for(int var=1;var<round_index;var++){
@@ -375,7 +380,7 @@ public class EMMAX {
 								Xs_after[i][var]+=(decomposed_array[i][j]*Xs_ori[j][var]);
 							}
 						}						
-					}
+					}//Xs_after[i][0]=intsept[i]; Xs_after[i][1] = ...; 
 					// add the new marker and do regression.
 //					best_P=1;
 					best_P_index=0;
@@ -387,12 +392,12 @@ public class EMMAX {
 						double[] the_full_list=emma.genotype.load_one_variant_by_index(chr, candidates.indexes_in_genotype[var_index]);
 						for(int sample_index=0; sample_index<emma.sample_size; sample_index++){
 							Xs_ori[sample_index][round_index] = the_full_list[emma.indexes_with_phenotype_in_genotype[sample_index]];
-						}
+						}//Xs_ori[sample_size][2]=...
 						for(int i=0;i<emma.sample_size;i++){							
 							for(int j=0;j<emma.sample_size;j++){
 								Xs_after[i][round_index]+=(decomposed_array[i][j]*Xs_ori[j][round_index]);
 							}													
-						}
+						}//Xs_after[i][2]= ...;
 						double[][] result=EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);						
 //						double[][] result=EMMAX.reg2results_lm(reg1, emma.sample_size);
 						if(result!=null && Double.compare(best_vc, result[2][0])<0){
@@ -456,45 +461,53 @@ public class EMMAX {
 			bw.write("#chr,location,pvalue,AdjustedR2,coefficient,Sd_Err,MAF_count\n");
 			System.out.println("start EMMAX");
 			
-			for(int chr=0;chr<emma.genotype.num_chrs;chr++){
+//			for(int chr=0;chr<emma.genotype.num_chrs;chr++) Qing : regions may not contain all the chr from genotype
+			for(int chr_index=0;chr_index<regions.length;chr_index++){
+				System.out.println("the index of chromosome is "+ chr_index);
 				int snp=0;
-				for(int region_index=0;region_index<regions[chr].length;region_index++){
+				int chr=0;
+				for(int region_index=0;region_index<regions[chr_index].length;region_index++){
+					System.out.println("the index of region is "+ region_index);
 				//for (HDF5MDDataBlock<MDDoubleArray> block : emma.genotype.position_fast_blocks[chr]){
-					double[][] data4thisblock=emma.genotype.load_variants_in_region(chr, regions[chr][region_index][0],regions[chr][region_index][1]);
+					chr=regions[chr_index][region_index][0];
+					double[][] data4thisblock=emma.genotype.load_variants_in_region(chr, regions[chr_index][region_index][1],regions[chr_index][region_index][2]);
 					//System.out.println(chr+":"+regions[chr][region_index][0]+"/"+regions[chr][region_index][1]+":"+data4thisblock.length);
 					// debug:
-					int start_index=Arrays.binarySearch(emma.genotype.locations[chr], regions[chr][region_index][0]);
+					int start_index=Arrays.binarySearch(emma.genotype.locations[chr], regions[chr_index][region_index][1]);
 					if(start_index<0){// no_found, and make use of the insertion-point returned by the binarySearch:
 						start_index=-(start_index+1);
 					}
 					System.out.println("data4thisblock.length = "+data4thisblock.length);
-					for(int var_index=0;var_index<data4thisblock.length;var_index++){
-						double[] X_ori=new double[emma.sample_size];
-						for(int sample_index=0; sample_index<emma.sample_size; sample_index++){
-							X_ori[sample_index] = data4thisblock[var_index][emma.indexes_with_phenotype_in_genotype[sample_index]];
-						}
-						boolean the_same=true;
-						for(int sample_index=1; sample_index<emma.sample_size; sample_index++){
-							if(Double.compare(X_ori[sample_index], X_ori[0])!=0)the_same=false;
-						}				
-						if(the_same)continue;
-						double[][] Xs_after=new double[emma.sample_size][2];						
-						for(int i=0;i<emma.sample_size;i++){
-							Xs_after[i][0]=intsept[i];
-							for(int j=0;j<emma.sample_size;j++){
-								Xs_after[i][1]+=(decomposed_array[i][j]*X_ori[j]);
+					if(data4thisblock.length>0) {
+						for(int var_index=0;var_index<data4thisblock.length;var_index++){
+							double[] X_ori=new double[emma.sample_size];
+							for(int sample_index=0; sample_index<emma.sample_size; sample_index++){
+								X_ori[sample_index] = data4thisblock[var_index][emma.indexes_with_phenotype_in_genotype[sample_index]];
 							}
-						}
-						double[][] result=EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
-						if(result!=null){
-							result[3]=new double[1];
-							result[3][0]=EMMAX.mafc(X_ori);
-							String out_res=EMMAX.results2string(result, corrected_threshold);
-							if(out_res!=null){
-								bw.write((chr+1)+","+emma.genotype.locations[chr][start_index+var_index]+","+out_res+"\n");
+							boolean the_same=true;
+							for(int sample_index=1; sample_index<emma.sample_size; sample_index++){
+								if(Double.compare(X_ori[sample_index], X_ori[0])!=0)the_same=false;
+							}				
+							if(the_same)continue;
+							double[][] Xs_after=new double[emma.sample_size][2];						
+							for(int i=0;i<emma.sample_size;i++){
+								Xs_after[i][0]=intsept[i];
+								for(int j=0;j<emma.sample_size;j++){
+									Xs_after[i][1]+=(decomposed_array[i][j]*X_ori[j]);
+								}
 							}
-						}						
-					}snp+=data4thisblock.length;
+							double[][] result=EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+							if(result!=null){
+								result[3]=new double[1];
+								result[3][0]=EMMAX.mafc(X_ori);
+								String out_res=EMMAX.results2string(result, corrected_threshold);
+								if(out_res!=null){
+									bw.write((chr+1)+","+emma.genotype.locations[chr][start_index+var_index]+","+out_res+"\n");
+								}
+							}						
+						}
+					}
+					snp+=data4thisblock.length;
 				}System.out.println("Number of test for CHR "+(chr+1)+": "+snp);
 			}			
 			bw.close();

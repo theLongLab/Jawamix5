@@ -215,7 +215,7 @@ public class FaSTLMM_LocalKinship extends FaSTLMM {
 					double[][] data_matching_phenotype=this.select_subset_of_data(genotype.load_variants_in_region(chr, start, end));					
 					//double[][] transformed_data=data_matching_phenotype;
 					if(data_matching_phenotype.length<2){
-						//System.out.println("NO SNP: "+chr+"/"+start);
+//						System.out.println("NO SNP: "+chr+"/"+start);
 						continue;
 					}
 					run_a_window(data_matching_phenotype, all_one_gt, low_counts, bw, chr, start);					

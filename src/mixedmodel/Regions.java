@@ -23,7 +23,7 @@ public class Regions {
 			HashMap<Integer, Integer> num_regions_chr=new HashMap<Integer, Integer>();
 			while(line!=null){
 				String[] temp=line.split("\t");
-				int the_chr=Integer.parseInt(temp[1]);
+				int the_chr=Integer.parseInt(temp[1]); // r1 \t the_chr !!! not the_chr does not from 0
 				if(!chrs.contains(the_chr))chrs.add(the_chr);
 				myFileFunctions.FileFunc.add2_counts_hashmap(num_regions_chr, the_chr, 1);
 				line=br_region.readLine();
@@ -35,7 +35,8 @@ public class Regions {
 			this.region_coordinates=new int[variants.num_chrs][][];
 			this.region_names=new String[variants.num_chrs][];
 			for(int k=0;k<variants.num_chrs;k++){
-				if(chrs.contains(k+1)){
+				if(chrs.contains(k+1)){ //chrs is the real chromosome, k is the chr_index, if any regions located in the_chr, then
+					//store regional corrdinates in region_coordiantes; otherwise, the_chr has an region array length equals 0
 					this.region_names[k]=new String[num_regions_chr.get(k+1)];
 					this.region_coordinates[k]=new int[num_regions_chr.get(k+1)][2];
 				}else{
@@ -51,7 +52,7 @@ public class Regions {
 				String[] temp=line.split("\t");
 				int the_chr=Integer.parseInt(temp[1]);
 				this.region_names[the_chr-1][indexes[the_chr-1]]=temp[0];
-				this.region_coordinates[the_chr-1][indexes[the_chr-1]][0]=Integer.parseInt(temp[2]);
+				this.region_coordinates[the_chr-1][indexes[the_chr-1]][0]=Integer.parseInt(temp[2]); // store corrodinate, chr_index starts from 0
 				this.region_coordinates[the_chr-1][indexes[the_chr-1]][1]=Integer.parseInt(temp[3]);
 				indexes[the_chr-1]++;
 				line=br_region.readLine();
