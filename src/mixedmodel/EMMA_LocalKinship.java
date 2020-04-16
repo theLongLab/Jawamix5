@@ -81,9 +81,9 @@ public class EMMA_LocalKinship extends EMMA {
 							double[][] transformed_X=EMMAX.transform_data(all_one_in_array, local_kinship.getData());
 							VarComp_Result result0=EMMA.REMLE_static(Y_global_transformed, transformed_X, local_kinship.getData());
 							
-//							double[] S=local_eigen.getRealEigenvalues();
-//							RealMatrix local_kinship_Ut= local_eigen.getVT();
-//							double[] transformed_Y=local_kinship_Ut.operate(Y_new_original);
+							double[] S=local_eigen.getRealEigenvalues(); //TODO:Uncommented this line and below 2 more lines to get rid of build error
+							RealMatrix local_kinship_Ut= local_eigen.getVT();
+							double[] transformed_Y=local_kinship_Ut.operate(Y_new_original);
 							
 							//double ml_null=myMathLib.StatFuncs.null_logL(transformed_Y,transformed_X[0]);
 							//System.out.println(ml_null+","+this.Likelihood_null);
@@ -91,9 +91,9 @@ public class EMMA_LocalKinship extends EMMA {
 									S, ml_null);
 							if(result!=null){
 								double total_variance=result.sigma_g+result.sigma_e;//*(1+this.delta_null);
-								bw.write((chr+1)+", "+start+", "+result.pvalue+", "+
+								/*bw.write((chr+1)+", "+start+", "+result.pvalue+", "+
 										result.sigma_g/total_variance+", "+(result.sigma_e/total_variance)*(1/(1+this.delta_null))+", "+ 
-										(result.sigma_e/total_variance)*(this.remle_delta/(1+this.delta_null))+"\n");
+										(result.sigma_e/total_variance)*(this.remle_delta/(1+this.delta_null))+"\n");*/	//TODO:Commented out due to not knowing what delta_null is
 						}
 						
 						//	System.out.println("Succ finsihed chr"+(chr+1)+" win "+start);

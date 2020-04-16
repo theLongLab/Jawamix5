@@ -1,15 +1,17 @@
 package mixedmodel;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 //import mixed_model.RootSearchEmmadeltaMLdLLwoZ;
 //import mixed_model.RootSearchEmmadeltaREMLdLLwoZ;
+import myMathLib.OCMAFunc;
 import myMathLib.Test;
 import flanagan.math.Matrix;
 import flanagan.roots.RealRoot;
 
-public class EMMA {
+public class EMMA_OCMA {
     // constants in the calculation
     public static final double ngrids = 100;
     public static final double llim = -10;
@@ -27,8 +29,8 @@ public class EMMA {
     VariantsDouble genotype;
     int[] indexes_with_phenotype_in_genotype;
     int[] mafc;
-    EigenApache reml_eig_L = null;
-    EigenApache ml_eig_R = null;
+    OCMAFunc reml_eig_L = null;
+    OCMAFunc ml_eig_R = null;
     // fields for REMLE:
     double remle_REML;
     double remle_delta;
@@ -37,7 +39,7 @@ public class EMMA {
     double heritability;
     boolean remle_calculated = false;
 
-    public EMMA() {
+    public EMMA_OCMA() {
 
     }
 
@@ -46,7 +48,7 @@ public class EMMA {
      *
      *  Find the sample_ids in both genotype and ori_phenotype. generate a clean phenotype dataset for further analysis.
      */
-    public EMMA(Phenotype ori_phenotype, VariantsDouble genotype, double[][] ori_kinship_matrix) {
+    public EMMA_OCMA(Phenotype ori_phenotype, VariantsDouble genotype, double[][] ori_kinship_matrix) {
         this.genotype = genotype;
 //		String[] id_phenotype=ori_phenotype.sample_ids;
         // find the ids
@@ -91,7 +93,7 @@ public class EMMA {
      *
      *  Find the sample_ids in both genotype and ori_phenotype. generate a clean phenotype dataset for further analysis.
      */
-    public EMMA(Phenotype ori_phenotype, VariantsDouble genotype, double[][] ori_kinship_matrix, boolean kinship_sample_selected) {
+    public EMMA_OCMA(Phenotype ori_phenotype, VariantsDouble genotype, double[][] ori_kinship_matrix, boolean kinship_sample_selected) {
         this.genotype = genotype;
 //		String[] id_phenotype=ori_phenotype.sample_ids;
         // find the ids
@@ -131,7 +133,7 @@ public class EMMA {
 //		}//Test.write2file(the_ids, "/Users/quan.long/look/ids.new");
     }
 
-    public static EigenApache eigen_R_wo_Z(double[][] X, double[][] K) {
+    public static OCMAFunc eigen_R_wo_Z(double[][] X, double[][] K) throws IOException, InterruptedException {
         int q = X[0].length;
         int sample_size = K.length;
         Matrix XX = new Matrix(X);
@@ -154,7 +156,7 @@ public class EMMA {
             for (int j = i + 1; j < sample_size; j++)
                 final_array.setElement(i, j, final_array.getElement(j, i));
         }
-        EigenApache result = new EigenApache(final_array.getArrayCopy());
+        OCMAFunc result = new OCMAFunc(final_array.getArrayCopy());
         diag = null;
         Kplus1 = null;
         S = null;
@@ -200,7 +202,7 @@ public class EMMA {
             ArrayList<Double> optLL = new ArrayList<>();
             double[] etas = new double[n - q];
 
-            EigenApache ml_eig_R = eigen_R_wo_Z(X, kinship_matrix);
+            OCMAFunc ml_eig_R = eigen_R_wo_Z(X, kinship_matrix);
 
             // etas <- crossprod(eig.R$vectors,y) has been implemented as below:
 
@@ -327,7 +329,7 @@ public class EMMA {
         this.REMLE(this.phenotype.values, this.cbind(chrs, indexes), null);
     }
 
-    public EigenApache eigen_L(double[][] Z) {
+    public OCMAFunc eigen_L(double[][] Z) throws IOException, InterruptedException {
         double[][] K = this.kinship_matrix;
         if (Z == null) {
             return eigen_L_wo_Z();
@@ -340,16 +342,16 @@ public class EMMA {
     /*
      * translated from EMMA/emma.eigen.L.wo.Z(K)
      */
-    public EigenApache eigen_L_wo_Z() {
+    public OCMAFunc eigen_L_wo_Z() throws IOException, InterruptedException {
         double[][] K = this.kinship_matrix;
-        return new EigenApache(K);
+        return new OCMAFunc(K);
     }
 
     /*
      *  translated from EMMA/emma.eigen.R <- function(Z,K,X,complete=TRUE)
      *  X is an n x q array for fixed effects
      */
-    public EigenApache eigen_R(double[][] Z, double[][] X) {
+    public OCMAFunc eigen_R(double[][] Z, double[][] X) throws IOException, InterruptedException {
         double[][] K = this.kinship_matrix;
         if (Z == null) {
             return eigen_R_wo_Z(X);
@@ -368,7 +370,7 @@ public class EMMA {
      *  translated from EMMA/emma.eigen.R.wo.Z <- function(K, X)
      *  X is an n x q array for fixed effects
      */
-    public EigenApache eigen_R_wo_Z(double[][] X) {
+    public OCMAFunc eigen_R_wo_Z(double[][] X) throws IOException, InterruptedException {
         double[][] K = this.kinship_matrix;
         int q = X[0].length;
         Matrix XX = new Matrix(X);
@@ -391,7 +393,7 @@ public class EMMA {
             for (int j = i + 1; j < this.sample_size; j++)
                 final_array.setElement(i, j, final_array.getElement(j, i));
         }
-        EigenApache result = new EigenApache(final_array.getArrayCopy());
+        OCMAFunc result = new OCMAFunc(final_array.getArrayCopy());
         diag = null;
         Kplus1 = null;
         S = null;
@@ -445,7 +447,7 @@ public class EMMA {
      *
      *	y is the phenotype, X is the fixed effect, K is the kinship and Z is the incidence matrix;
      */
-    public void MLE(double[] y, double[][] X, double[][] Z) {
+    public void MLE(double[] y, double[][] X, double[][] Z) throws IOException, InterruptedException {
         int n = y.length;
         int t = this.kinship_matrix.length;
         int q = X[0].length; // number of fixed effets;
@@ -723,7 +725,7 @@ public class EMMA {
         return;
     }
 
-    public void single_ML_LRT(double[] y, double[][] X, double[][] Z) {
+    public void single_ML_LRT(double[] y, double[][] X, double[][] Z) throws IOException, InterruptedException {
         this.MLE(y, X, Z);
         double M1 = this.mle_ML;
         int[] indexes0 = {};
@@ -756,7 +758,7 @@ public class EMMA {
     /*
      * return the array = diag(1/sqrt(eig_L.eigenvalues[i]+optdelta))*[eig_L.vectors]
      */
-    public double[][] reml_decompositioned_array() {
+    public double[][] reml_decompositioned_array() throws IOException, InterruptedException {
         if (this.reml_eig_L == null) {
             this.reml_eig_L = this.eigen_L_wo_Z();
         }
@@ -777,3 +779,4 @@ public class EMMA {
 
 
 }
+

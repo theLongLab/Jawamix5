@@ -3,6 +3,7 @@ package mixedmodel;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,7 +17,7 @@ import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 import ch.systemsx.cisd.base.mdarray.MDDoubleArray;
 import ch.systemsx.cisd.hdf5.HDF5MDDataBlock;
 
-public class EMMAX {
+public class EMMAX_OCMA {
 
     public static void emmax_analysis(String genotype_hdf5_file, String phe_file, String kinship_file, String output_folder, int round,
                                       double p_value_after_correction, int min_sample_size, double maf_plot_threshold, boolean plot) {
@@ -24,10 +25,10 @@ public class EMMAX {
             VariantsDouble genotype = new VariantsDouble(genotype_hdf5_file);
             MultiPhenotype phenotypeS = new MultiPhenotype(phe_file);
             for (int phe_index = 0; phe_index < phenotypeS.num_of_pheno; phe_index++) {
-                EMMA emma = new EMMA(phenotypeS.phenotypes[phe_index], genotype, new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
+                EMMA_OCMA emma = new EMMA_OCMA(phenotypeS.phenotypes[phe_index], genotype, new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
                 if (emma.sample_size >= min_sample_size) {
                     System.out.println("Running Phenotype:" + phe_index + ":" + emma.phenotype.phe_id);
-                    String outputfile = output_folder + "/EMMAX." + phe_index + "_" + emma.phenotype.phe_id + ".top";
+                    String outputfile = output_folder + "/EMMAX_OCMA." + phe_index + "_" + emma.phenotype.phe_id + ".top";
                     long startTime = System.currentTimeMillis();
                     run_emmax_or_stepwise_for_one_pheno_blocks(outputfile, p_value_after_correction, emma, maf_plot_threshold, genotype_hdf5_file, round, plot);
                     System.out.println("Time Consumed: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds.\n");
@@ -45,10 +46,10 @@ public class EMMAX {
         try {
             VariantsDouble genotype = new VariantsDouble(genotype_hdf5_file);
             MultiPhenotype phenotypeS = new MultiPhenotype(phe_file);
-            EMMA emma = new EMMA(phenotypeS.phenotypes[phe_index], genotype, new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
+            EMMA_OCMA emma = new EMMA_OCMA(phenotypeS.phenotypes[phe_index], genotype, new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
             if (emma.sample_size >= min_sample_size) {
                 System.out.println("Running Phenotype:" + phe_index + ":" + emma.phenotype.phe_id);
-                String outputfile = output_folder + "/EMMAX." + phe_index + "_" + emma.phenotype.phe_id + ".top";
+                String outputfile = output_folder + "/EMMAX_OCMA." + phe_index + "_" + emma.phenotype.phe_id + ".top";
                 long startTime = System.currentTimeMillis();
                 run_emmax_or_stepwise_for_one_pheno_blocks(outputfile, p_value_after_correction, emma, maf_plot_threshold, genotype_hdf5_file, round, plot);
                 System.out.println("Time Consumed: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds.\n");
@@ -69,11 +70,11 @@ public class EMMAX {
         try {
             VariantsDouble genotype = new VariantsDouble(genotype_hdf5_file);
             MultiPhenotype phenotypeS = new MultiPhenotype(phe_file);
-            EMMA emma = new EMMA(phenotypeS.phenotypes[phe_index], genotype,
+            EMMA_OCMA emma = new EMMA_OCMA(phenotypeS.phenotypes[phe_index], genotype,
                     new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
             if (emma.sample_size >= min_sample_size) {
                 System.out.println("Running Phenotype:" + phe_index + ":" + emma.phenotype.phe_id);
-                String outputfile = output_folder + "/EMMAX." + phe_index + "_" + emma.phenotype.phe_id + ".top";
+                String outputfile = output_folder + "/EMMAX_OCMA." + phe_index + "_" + emma.phenotype.phe_id + ".top";
                 long startTime = System.currentTimeMillis();
                 run_emmax_regions(outputfile, p_value_after_correction, emma, maf_plot_threshold, genotype_hdf5_file, plot, regions);
                 System.out.println("Time Consumed: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds.\n");
@@ -85,8 +86,8 @@ public class EMMAX {
         }
     }
 
-    public static double[][] transform_data(double[][] ori_data, double[][] decomposed_array, EMMA emma) {
-        double[][] selected_data = EMMAX.select_subset_of_data(ori_data, emma);
+    public static double[][] transform_data(double[][] ori_data, double[][] decomposed_array, EMMA_OCMA emma) {
+        double[][] selected_data = EMMAX_OCMA.select_subset_of_data(ori_data, emma);
         int sample_size = selected_data[0].length;
         if (sample_size != decomposed_array.length) {
             System.out.println("sample_size!=decomposed_array.length");
@@ -133,7 +134,7 @@ public class EMMAX {
     }
 
     /*
-     * Run EMMA only once on selected variants
+     * Run EMMA_OCMA only once on selected variants
      */
     public static void emmax_select(String genotype_hdf5_file, String input_pheno, String kinship_file, int phe_index,
                                     String output_file, int[] chrs, int[] locs) {
@@ -141,7 +142,7 @@ public class EMMAX {
             int num_snp = chrs.length;
             VariantsDouble genotype = new VariantsDouble(genotype_hdf5_file);
             MultiPhenotype phenotypeS = new MultiPhenotype(input_pheno);
-            EMMA emma = new EMMA(phenotypeS.phenotypes[phe_index], genotype, new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
+            EMMA_OCMA emma = new EMMA_OCMA(phenotypeS.phenotypes[phe_index], genotype, new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
             BufferedWriter bw = new BufferedWriter(new FileWriter(output_file));
             // run REML
             int[] indexes0 = {}, chrs0 = {};
@@ -179,7 +180,7 @@ public class EMMAX {
                     }
                 }
             }
-            double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+            double[][] result = EMMAX_OCMA.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
             bw.write("RegressionParameters:");
             for (int k = 0; k < result[0].length; k++) bw.write("\t" + result[0][k]);
             bw.write("\nIndividual_P-values(t-tests):");
@@ -192,9 +193,9 @@ public class EMMAX {
         }
     }
 
-    public static Regional_Results run_stepwise_for_one_region(double pvalue_threshold, EMMA emma,
+    public static Regional_Results run_stepwise_for_one_region(double pvalue_threshold, EMMA_OCMA emma,
                                                                double maf_plot_threshold, String genotype_hdf5_file, int round, int chr, int start_loc,
-                                                               int end_loc, double[][] decomposed_array, boolean emma_estimated) {
+                                                               int end_loc, double[][] decomposed_array, boolean emma_estimated) throws IOException, InterruptedException {
         // run REML
         if (!emma_estimated) {
             int[] indexes = {}, chrs = {};
@@ -255,8 +256,8 @@ public class EMMAX {
                 if (best_indexes_set.contains(var_index)) continue;
                 for (int sample_index = 0; sample_index < emma.sample_size; sample_index++)
                     Xs[sample_index][round_index - 1] = genotype_after_trans[sample_index][var_index];
-                double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs);
-//						double[][] result=EMMAX.reg2results_lm(reg1, emma.sample_size);
+                double[][] result = EMMAX_OCMA.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs);
+//						double[][] result=EMMAX_OCMA.reg2results_lm(reg1, emma.sample_size);
                 if (result != null && Double.compare(best_vc, result[2][0]) < 0) {
                     best_P_index = var_index;
                     best_vc = result[2][0];
@@ -275,8 +276,8 @@ public class EMMAX {
         return region_data;
     }
 
-    public static void run_emmax_or_stepwise_for_one_pheno_blocks(String single_marker_outfile, double pvalue_threshold, EMMA emma,
-                                                                  double maf_plot_threshold, String genotype_hdf5_file, int round, boolean plot) {
+    public static void run_emmax_or_stepwise_for_one_pheno_blocks(String single_marker_outfile, double pvalue_threshold, EMMA_OCMA emma,
+                                                                  double maf_plot_threshold, String genotype_hdf5_file, int round, boolean plot) throws IOException, InterruptedException {
         // run REML
         int[] indexes = {}, chrs = {};
         emma.REMLE(emma.phenotype.values, emma.cbind(chrs, indexes), null);
@@ -304,7 +305,7 @@ public class EMMAX {
                     + "; Transform=" + emma.phenotype.transform_approach + "(P=" + emma.phenotype.normality_pvaule + ")" +
                     "; Phenotype=" + emma.phenotype.phe_id + "; GenotypeFile=" + genotype_hdf5_file + "\n");
             bw.write("#chr,location,pvalue,AdjustedR2,coefficient,Sd_Err,MAF_count\n");
-            System.out.println("start EMMAX");
+            System.out.println("start EMMAX_OCMA");
 
             for (int chr = 0; chr < emma.genotype.num_chrs; chr++) {
                 int snp = 0;
@@ -327,11 +328,11 @@ public class EMMAX {
                                 Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
                             }
                         }
-                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+                        double[][] result = EMMAX_OCMA.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
                         if (result != null) {
                             result[3] = new double[1];
-                            result[3][0] = EMMAX.mafc(X_ori);
-                            String out_res = EMMAX.results2string(result, corrected_threshold);
+                            result[3][0] = EMMAX_OCMA.mafc(X_ori);
+                            String out_res = EMMAX_OCMA.results2string(result, corrected_threshold);
                             if (out_res != null) {
                                 bw.write((chr + 1) + "," + emma.genotype.locations[chr][snp + var_index] + "," + out_res + "\n");
                             }
@@ -402,8 +403,8 @@ public class EMMAX {
                                 Xs_after[i][round_index] += (decomposed_array[i][j] * Xs_ori[j][round_index]);
                             }
                         }
-                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
-//						double[][] result=EMMAX.reg2results_lm(reg1, emma.sample_size);
+                        double[][] result = EMMAX_OCMA.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+//						double[][] result=EMMAX_OCMA.reg2results_lm(reg1, emma.sample_size);
                         if (result != null && Double.compare(best_vc, result[2][0]) < 0) {
                             best_P_index = var_index;
                             best_vc = result[2][0];
@@ -436,8 +437,8 @@ public class EMMAX {
     }
 
 
-    public static void run_emmax_regions(String single_marker_outfile, double pvalue_threshold, EMMA emma,
-                                         double maf_plot_threshold, String genotype_hdf5_file, boolean plot, int[][][] regions) {
+    public static void run_emmax_regions(String single_marker_outfile, double pvalue_threshold, EMMA_OCMA emma,
+                                         double maf_plot_threshold, String genotype_hdf5_file, boolean plot, int[][][] regions) throws IOException, InterruptedException {
         // run REML
         int[] indexes = {}, chrs = {};
         emma.REMLE(emma.phenotype.values, emma.cbind(chrs, indexes), null);
@@ -465,7 +466,7 @@ public class EMMAX {
                     + "; Transform=" + emma.phenotype.transform_approach + "(P=" + emma.phenotype.normality_pvaule + ")" +
                     "; Phenotype=" + emma.phenotype.phe_id + "; GenotypeFile=" + genotype_hdf5_file + "\n");
             bw.write("#chr,location,pvalue,AdjustedR2,coefficient,Sd_Err,MAF_count\n");
-            System.out.println("start EMMAX");
+            System.out.println("start EMMAX_OCMA");
 
             for (int chr = 0; chr < emma.genotype.num_chrs; chr++) {
                 int snp = 0;
@@ -496,11 +497,11 @@ public class EMMAX {
                                 Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
                             }
                         }
-                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+                        double[][] result = EMMAX_OCMA.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
                         if (result != null) {
                             result[3] = new double[1];
-                            result[3][0] = EMMAX.mafc(X_ori);
-                            String out_res = EMMAX.results2string(result, corrected_threshold);
+                            result[3][0] = EMMAX_OCMA.mafc(X_ori);
+                            String out_res = EMMAX_OCMA.results2string(result, corrected_threshold);
                             if (out_res != null) {
                                 bw.write((chr + 1) + "," + emma.genotype.locations[chr][start_index + var_index] + "," + out_res + "\n");
                             }
@@ -519,7 +520,7 @@ public class EMMAX {
 
     /*
      * This function makes two plots immediately after calling
-     * public static void run_emmax_for_one_pheno(String output_pvalue_file, double pvalue_threshold, EMMA emma, double maf_plot_threshold)
+     * public static void run_emmax_for_one_pheno(String output_pvalue_file, double pvalue_threshold, EMMA_OCMA emma, double maf_plot_threshold)
      *	(1) Manhattan plot for p-value.
      *	(2) Manhattan plot for R2.
      *
@@ -559,7 +560,7 @@ public class EMMAX {
         }
     }
 
-    public static double[][] select_subset_of_data(double[][] full_data_region, EMMA emma) {
+    public static double[][] select_subset_of_data(double[][] full_data_region, EMMA_OCMA emma) {
         double[][] selected_ori = new double[full_data_region.length][emma.sample_size];
         boolean[] informative = new boolean[full_data_region.length];
         for (int var_index = 0; var_index < full_data_region.length; var_index++) {
@@ -662,7 +663,7 @@ public class EMMAX {
     /*
      * load a few particular (may not continues) variants, specified by indexes.
      */
-    public static double[][] load_data_according_phenotype(int[] chr_indexes, int[] snp_indexes, EMMA emma) {
+    public static double[][] load_data_according_phenotype(int[] chr_indexes, int[] snp_indexes, EMMA_OCMA emma) {
         double[][] Xs = new double[snp_indexes.length][emma.sample_size];
         for (int snp = 0; snp < snp_indexes.length; snp++) {
             boolean the_same = true;
@@ -680,7 +681,7 @@ public class EMMAX {
     /*
      * load a region of continues variants, specified by location.
      */
-    public static double[][] load_data_according_phenotype(int chr, int start_location, int end_location, EMMA emma) {
+    public static double[][] load_data_according_phenotype(int chr, int start_location, int end_location, EMMA_OCMA emma) {
         double[][] ori_data = emma.genotype.load_variants_in_region(chr, start_location, end_location);
         double[][] Xs = new double[ori_data.length][emma.sample_size];
         boolean[] the_sames = new boolean[ori_data.length];
