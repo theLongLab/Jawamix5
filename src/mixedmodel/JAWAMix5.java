@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 
+import Region_Emmax.Region_EMMAX;
 import nam.Cross_info;
 import nam.Founder;
 import nam.Imputation;
@@ -431,15 +432,16 @@ public class JAWAMix5 {
 					} else {
 						//TODO: Add check for output folder existing and create if not
 						if (region_info == null) {
-							EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
-									phe_index, maf_threshold_plot, plot);
-						} else {
 							if (ocma = true) {
 								EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 										phe_index, maf_threshold_plot, plot);
 							} else {
 								EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 										phe_index, maf_threshold_plot, plot);
+						} else {
+							int[][][] region = Region_EMMAX.read_regions_from_file(region_info);
+							EMMAX.emmax_analysis_regions(input_geno, input_pheno, kinship, output_folder, 
+									p_after_corr, min_sample_size, phe_index, maf_threshold_plot, plot, region);
 							}
 						}
 					}
@@ -499,6 +501,15 @@ public class JAWAMix5 {
 								phe_index, maf_threshold_plot, plot);
 						long end_time = System.nanoTime();
 						System.out.println("Time taken for EMMA with OCMA: " + ((end_time - start_time) / 1000000000.0) + " seconds");
+					else{
+						if(region_info==null) {
+							EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size, 
+									phe_index, maf_threshold_plot, plot);
+						}else {
+							int[][][] region = Region_EMMAX.read_regions_from_file(region_info);
+							EMMAX.emmax_analysis_regions(input_geno, input_pheno, kinship, output_folder, 
+									p_after_corr, min_sample_size, phe_index, maf_threshold_plot, plot, region);
+						}
 					}
 				}
 			}*/
