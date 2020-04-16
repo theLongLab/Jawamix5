@@ -388,50 +388,58 @@ public class JAWAMix5 {
 						"[-p\t<pvalue_after_multi.correct.> (df=1000)]\n\t" +
 						"[-index\t<phenotype_index> (df=ALL, start from zero)]\n\t" +
 						"[-min_size\t<min_sample_size> (df=100)]\n\t" +
-						"[-maf\t<maf_threshold_plot> (df=0.05)]\n\t"+
-						"[-plot\t<1|0> (df=1)]");
+						"[-maf\t<maf_threshold_plot> (df=0.05)]\n\t" +
+						"[-plot\t<1|0> (df=1)]\n\t" +
+						"[-ocma\t<to use out of core matrix calculations>]");
 				System.exit(0);
-			}else{
-				String input_geno="", input_pheno=null, output_folder=null, kinship=null;
-				double p_after_corr=1000, maf_threshold_plot=0.05;
-				int phe_index=-1, min_sample_size=100, round=1;
-				boolean plot=true;
-				for(int k=1; k<args.length; k++){
-					if(args[k].startsWith("-")){
-						if(args[k].equals("-ig"))input_geno=args[k+1];
-						else if(args[k].equals("-ip"))input_pheno=args[k+1];
-						else if(args[k].equals("-ik"))kinship=args[k+1];
-						else if(args[k].equals("-o"))output_folder=args[k+1];
-						else if(args[k].equals("-index"))phe_index=Integer.parseInt(args[k+1]);
-						else if(args[k].equals("-p"))p_after_corr=Double.parseDouble(args[k+1]);
-						else if(args[k].equals("-min_size"))min_sample_size=Integer.parseInt(args[k+1]);
-						else if(args[k].equals("-maf"))maf_threshold_plot=Double.parseDouble(args[k+1]);
-						else if(args[k].equals("-plot")){if(args[k+1].equals("0"))plot=false;}
+			} else {
+				String input_geno = "", input_pheno = null, output_folder = null, kinship = null;
+				double p_after_corr = 1000, maf_threshold_plot = 0.05;
+				int phe_index = -1, min_sample_size = 100, round = 1;
+				boolean plot = true;
+				boolean ocma = false;
+				for (int k = 1; k < args.length; k++) {
+					if (args[k].startsWith("-")) {
+						if (args[k].equals("-ig")) input_geno = args[k + 1];
+						else if (args[k].equals("-ip")) input_pheno = args[k + 1];
+						else if (args[k].equals("-ik")) kinship = args[k + 1];
+						else if (args[k].equals("-o")) output_folder = args[k + 1];
+						else if (args[k].equals("-index")) phe_index = Integer.parseInt(args[k + 1]);
+						else if (args[k].equals("-p")) p_after_corr = Double.parseDouble(args[k + 1]);
+						else if (args[k].equals("-min_size")) min_sample_size = Integer.parseInt(args[k + 1]);
+						else if (args[k].equals("-maf")) maf_threshold_plot = Double.parseDouble(args[k + 1]);
+						else if (args[k].equals("-plot")) {
+							if (args[k + 1].equals("0")) plot = false;
+							else if (args[k].equals("-ocma")) ocma = false;
+						}
 					}
-				}if(input_geno==null||input_pheno==null|| kinship==null||output_folder==null){
+				}
+				if (input_geno == null || input_pheno == null || kinship == null || output_folder == null) {
 					System.out.println("Input or output can't be null!");
-				}else{
+				} else {
 					if (phe_index == -1) {
 						//TODO: Add check for output folder existing and create if not
-						System.out.println("Starting timing...");
-						long start_time = System.nanoTime();
-						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
-								maf_threshold_plot, plot);
-						long end_time = System.nanoTime();
-						System.out.println("Time taken for EMMA without OCMA: " + ((end_time - start_time) / 1000000000.0) + " seconds");
+						if (ocma = true) {
+							EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
+									maf_threshold_plot, plot);
+						} else {
+							EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
+									maf_threshold_plot, plot);
+						}
 					} else {
 						//TODO: Add check for output folder existing and create if not
-						System.out.println("Starting timing...");
-						long start_time = System.nanoTime();
-						EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
-								phe_index, maf_threshold_plot, plot);
-						long end_time = System.nanoTime();
-						System.out.println("Time taken for EMMA without OCMA: " + ((end_time - start_time) / 1000000000.0) + " seconds");
+						if (ocma = true) {
+							EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
+									phe_index, maf_threshold_plot, plot);
+						} else {
+							EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
+									phe_index, maf_threshold_plot, plot);
+						}
 					}
 				}
 			}
 
-		} else if (function.equals("emmax_ocma")) {
+/*		} else if (function.equals("emmax_ocma")) {
 			if (args.length == 1) {
 				//TODO: Add description of format of phenotype file expected
 				System.out.println("Run EMMAX for phenotype(s) with OCMA.");
@@ -486,7 +494,7 @@ public class JAWAMix5 {
 						System.out.println("Time taken for EMMA with OCMA: " + ((end_time - start_time) / 1000000000.0) + " seconds");
 					}
 				}
-			}
+			}*/
 
 
 			//#####################################################################################

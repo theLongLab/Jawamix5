@@ -19,8 +19,7 @@ public class MatrixFunctions {
 
         BinaryFiles.write_bin_file(curr_dir + "/InputMatrix.bin", inp);
 
-        ProcessBuilder pb = new ProcessBuilder("/home/pkossinna/Downloads/OCMA-master_1/" +
-                "OCMA-master/ocma_linux/Linux/ocma-0.1/bin/ocma", "eigen", "double", "disk",
+        ProcessBuilder pb = new ProcessBuilder("ocma", "eigen", "double", "disk",
                 Integer.toString(inp.length), curr_dir + "/InputMatrix.bin", "eigenvals.bin", "eigenvecs.bin");
 
         Process pr = pb.start();
@@ -54,8 +53,7 @@ public class MatrixFunctions {
 
         start_time = System.nanoTime();
 
-        ProcessBuilder pb = new ProcessBuilder("/home/pkossinna/Downloads/OCMA-master_1/" +
-                "OCMA-master/ocma_linux/Linux/ocma-0.1/bin/ocma", "singular", "double", "disk",
+        ProcessBuilder pb = new ProcessBuilder("ocma", "singular", "double", "disk",
                 Integer.toString(inp.length), Integer.toString(inp[0].length), curr_dir + "/InputMatrix.bin",
                 "single_vals.bin", "left_single.bin", "right_single.bin");
 

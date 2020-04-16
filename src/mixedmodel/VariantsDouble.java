@@ -932,7 +932,7 @@ public class VariantsDouble {
             double[][] total_num_var_used = new double[this.sample_size][this.sample_size];
             for (int chr = 0; chr < this.num_chrs; chr++) {
                 for (HDF5MDDataBlock<MDDoubleArray> block : this.position_fast_blocks[chr]) {
-                    double start_time = System.nanoTime();
+                    //double start_time = System.nanoTime();
                     double[][] data4thisblock = block.getData().toMatrix();
                     for (int var_index = 0; var_index < data4thisblock.length; var_index++) {
                         if (KinshipMatrix.maf(data4thisblock[var_index], scale) < min_MAF) continue;
@@ -945,8 +945,8 @@ public class VariantsDouble {
                             }
                         }
                     }
-                    double end_time = System.nanoTime();
-                    System.out.println("Time taken for 1 block in chr " + chr + ": " + ((end_time - start_time) / 1000000000));
+                    //double end_time = System.nanoTime();
+                    //System.out.println("Time taken for 1 block in chr " + chr + ": " + ((end_time - start_time) / 1000000000));
                 }
                 System.out.println("Finished Chr" + (chr + 1));
             }
