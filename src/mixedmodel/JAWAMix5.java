@@ -390,10 +390,12 @@ public class JAWAMix5 {
 						"[-min_size\t<min_sample_size> (df=100)]\n\t" +
 						"[-maf\t<maf_threshold_plot> (df=0.05)]\n\t" +
 						"[-plot\t<1|0> (df=1)]\n\t" +
+						"[-ri\t<region infomation in format: r0 chr start end> (require pheno_index)]\n\t" +
 						"[-ocma\t<to use out of core matrix calculations>]");
 				System.exit(0);
 			} else {
-				String input_geno = "", input_pheno = null, output_folder = null, kinship = null;
+				String input_geno = "", input_pheno = null, output_folder = null, kinship = null, region_info = null;
+				;
 				double p_after_corr = 1000, maf_threshold_plot = 0.05;
 				int phe_index = -1, min_sample_size = 100, round = 1;
 				boolean plot = true;
@@ -410,8 +412,8 @@ public class JAWAMix5 {
 						else if (args[k].equals("-maf")) maf_threshold_plot = Double.parseDouble(args[k + 1]);
 						else if (args[k].equals("-plot")) {
 							if (args[k + 1].equals("0")) plot = false;
-							else if (args[k].equals("-ocma")) ocma = false;
-						}
+						} else if (args[k].equals("-ri")) region_info = args[k + 1];
+						else if (args[k].equals("-ocma")) ocma = false;
 					}
 				}
 				if (input_geno == null || input_pheno == null || kinship == null || output_folder == null) {
@@ -428,12 +430,17 @@ public class JAWAMix5 {
 						}
 					} else {
 						//TODO: Add check for output folder existing and create if not
-						if (ocma = true) {
-							EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
-									phe_index, maf_threshold_plot, plot);
-						} else {
+						if (region_info == null) {
 							EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 									phe_index, maf_threshold_plot, plot);
+						} else {
+							if (ocma = true) {
+								EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
+										phe_index, maf_threshold_plot, plot);
+							} else {
+								EMMAX.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
+										phe_index, maf_threshold_plot, plot);
+							}
 						}
 					}
 				}
