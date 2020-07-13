@@ -137,7 +137,7 @@ Mandatory	parameters:
 - -ig:	input	genotype	file	in	HDF5	format
 - -ip:	phenotype	file
 - -o:	output	folder
-- -ic: input regions #C0 1;840000;850000	1;890000;900000 [1:chr; 840000:region start position; 850000:region end position]
+- -ic: input regions [e.g. C0 1;840000;850000	1;890000;900000] #[1: chr; 840000: region start position; 850000: region end position]
 - -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
 
 Options:
