@@ -131,10 +131,21 @@ Mandatory	parameters:
 - -w: tiling	window	size	(it	should	be	consistent	with	the	kinship	files and	must therefore be	the	same	as	specified	when	running	“kinship”	function.)
 - -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
 
+**compound**:	Run	local	variance	component	analysis for the	genome based on imputting regions.
+Mandatory	parameters:
+- -ig:	input	genotype	file	in	HDF5	format
+- -ip:	phenotype	file
+- -o:	output	folder
+- -ic: input regions #C0 1;840000;850000	1;890000;900000 [1:chr; 840000:region start position; 850000:region end position]
+- -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
+
 Options:
+- -method: full, grid, transform
 - -index:	the	phenotype	index	(start	from	zero)	in	the	event	that	there	are	multiple	phenotypes	in	the	input	file.	If	not	specified,	by	default	all	the	phenotypes	will	be	analyzed	sequentially.
 - -step:	the	size	of	searching	grid.	The	smaller,	the	better	resolution	of	the
 analysis,	but	also	slower.
+- -ik_l:	folder	contains	local	kinship	files	generated	by	function	“kinship”. Since	this	method	assumes	the	naming	conventions	of	all	kinship	files,	it	is	strongly	recommended	to	use	function	“kinship”	of	JAWAMix5	to	generate	the	kinship	files.
+- -min_size: min_sample_size (n=40)
 
 **rare**:	Run	rare	variants	analysis	using	both	standard	aggregate test and	another	aggregate	test leveraging	potential	synthetic	associations.	Population	structure	will	be	controlled	by	mixed	model.  
 Mandatory	parameters:
