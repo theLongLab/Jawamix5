@@ -131,14 +131,19 @@ Mandatory	parameters:
 - -w: tiling	window	size	(it	should	be	consistent	with	the	kinship	files and	must therefore be	the	same	as	specified	when	running	“kinship”	function.)
 - -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
 
-**compound**:	Run	local	variance	component	analysis for the	genome based on imputting regions.
+**compound**:	refers to ILMM method which run	local	variance component	analysis for the	genome based on imputting regions. 
 
 Mandatory	parameters:
 - -ig:	input	genotype	file	in	HDF5	format
 - -ip:	phenotype	file
 - -o:	output	folder
-- -ic: input regions [e.g. C0 1;840000;850000	1;890000;900000] #[1: chr; 840000: region start position; 850000: region end position]
+- -ic: input regions
 - -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
+
+- An example for the input file for -ic:
+|Index|Region 1 \n(chr;start;end)|Region 2|
+|---|---|---|
+|C0|1;840000;850000|1;890000;900000|
 
 Options:
 - -ik_l:	folder	contains	local	kinship	files	generated	by	function	“kinship”. Since	this	method	assumes	the	naming	conventions	of	all	kinship	files,	it	is	strongly	recommended	to	use	function	“kinship”	of	JAWAMix5	to	generate	the	kinship	files.
