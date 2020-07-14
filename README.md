@@ -141,7 +141,9 @@ Mandatory	parameters:
 - -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
 
 - An example for the input file for -ic:
-|Index|Region 1 \n(chr;start;end)|Region 2|
+
+
+|Index|Region 1 (chr;start;end)|Region 2|
 |---|---|---|
 |C0|1;840000;850000|1;890000;900000|
 
