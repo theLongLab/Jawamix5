@@ -246,6 +246,147 @@ public class VariantsDouble {
         return new VariantsDouble(file_hdf5);
     }
 
+    public static VariantsDouble importWeightedCSV(String file_csv, String file_hdf5, int block_size) {
+        System.out.println("Start importing data from " + file_csv + " to HDF5 format.");
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file_csv));
+            String line = br.readLine();//header
+            String[] temp = line.split(",");
+            ArrayList<Integer> num_of_sites_per_chr = new ArrayList<>();
+            ArrayList<ArrayList<Integer>> var_locartions_list = new ArrayList<>();
+            ArrayList<ArrayList<Integer>> var_mafc_list = new ArrayList<>();
+            int sample_size = temp.length - 2;
+            String[] sample_ids = new String[sample_size];
+            for (int k = 0; k < sample_size; k++) sample_ids[k] = temp[k + 2];
+            line = br.readLine(); // the first data line
+            temp = line.split(",");
+            int old_chr = Integer.parseInt(temp[0]);
+            int num_of_sites_this_chr = 1;
+            ArrayList<Integer> locations_this_chr = new ArrayList<>();
+            locations_this_chr.add(Integer.parseInt(temp[1]));
+            //ArrayList<Integer> mafc_this_chr = new ArrayList<>();
+            //mafc_this_chr.add(mafc(temp));
+            line = br.readLine();
+            while (line != null) {
+                temp = line.split(",");
+                if (temp.length - 2 != sample_size) {
+                    System.out.println("Sample size not the same!");
+                }
+                int chr = Integer.parseInt(temp[0]);
+                if (chr != old_chr) {
+                    var_locartions_list.add(locations_this_chr);
+                    //var_mafc_list.add(mafc_this_chr);
+                    num_of_sites_per_chr.add(num_of_sites_this_chr);
+                    locations_this_chr = new ArrayList<Integer>();
+                    //mafc_this_chr = new ArrayList<Integer>();
+                    num_of_sites_this_chr = 0;
+                    old_chr = chr;
+                }
+                locations_this_chr.add(Integer.parseInt(temp[1]));
+                //mafc_this_chr.add(mafc(temp));
+                num_of_sites_this_chr++;
+                line = br.readLine();
+            }// the last chr:
+            var_locartions_list.add(locations_this_chr);
+            //var_mafc_list.add(mafc_this_chr);
+            num_of_sites_per_chr.add(num_of_sites_this_chr);
+            int num_chrs = num_of_sites_per_chr.size();
+            int[] num_sites = new int[num_chrs];
+            int[][] var_positions = new int[num_chrs][];
+            int[][] var_mafc = new int[num_chrs][];
+            for (int chr = 0; chr < num_chrs; chr++) {
+                num_sites[chr] = num_of_sites_per_chr.get(chr);
+                var_positions[chr] = new int[num_sites[chr]];
+                var_mafc[chr] = new int[num_sites[chr]];
+                ArrayList<Integer> locations_the_chr = var_locartions_list.get(chr);
+                //ArrayList<Integer> mafc_the_chr = var_mafc_list.get(chr);
+                for (int k = 0; k < num_sites[chr]; k++) {
+                    var_positions[chr][k] = locations_the_chr.get(k);
+                    //var_mafc[chr][k] = mafc_the_chr.get(k);
+                }
+            }
+            System.out.println("Finished scanning the .csv file and found " + num_chrs + " chromosomes.\nChr\t#variants");
+            for (int chr = 0; chr < num_chrs; chr++) {
+                System.out.println("Chr" + (chr + 1) + ":\t" + num_sites[chr]);
+            }
+            File hdf5_old = new File(file_hdf5);
+            if (hdf5_old.exists()) {
+                hdf5_old.delete();
+                System.out.println(file_hdf5 + " already existed. It has been deleted!");
+            }
+            IHDF5Writer writer = HDF5Factory.open(file_hdf5);
+            // CODE FOR constructing above structure (all groups and tables and importing data)
+            writer.object().createGroup("/genotype");
+            writer.int32().setAttr("/genotype", "sample_size", sample_size);
+            writer.int32().setAttr("/genotype", "block_size", block_size);
+            writer.int32().setAttr("/genotype", "num_chrs", num_chrs);
+            writer.bool().setAttr("/genotype", "transformed", false);
+            writer.writeStringArray("/genotype/sample_ids", sample_ids);
+            double[] all_one = new double[sample_size];
+            Arrays.fill(all_one, 1.0);
+            writer.writeDoubleArray("/genotype/intercepts", all_one);
+            int[] num_blocks_per_chr = new int[num_chrs];
+            for (int chr = 0; chr < num_chrs; chr++) {
+                num_blocks_per_chr[chr] = num_sites[chr] / block_size + 1;
+                writer.object().createGroup("/genotype/chr" + (1 + chr));
+                writer.writeIntArray("/genotype/chr" + (1 + chr) + "/var_pos", var_positions[chr]);
+                writer.writeIntArray("/genotype/chr" + (1 + chr) + "/var_mafc", var_mafc[chr]);
+                writer.float64().createMatrix("/genotype/chr" + (1 + chr) + "/indi_fast", sample_size, num_sites[chr], sample_size, block_size);
+                writer.float64().createMatrix("/genotype/chr" + (1 + chr) + "/position_fast", num_sites[chr], sample_size, block_size, sample_size);
+            }
+            writer.writeIntArray("/genotype/num_blocks_per_chr", num_blocks_per_chr);
+            // Read data again to fill matrix:
+            System.out.println("Reading data again to create HDF5 file for genotypes.");
+            br = new BufferedReader(new FileReader(file_csv));
+            line = br.readLine();//header
+            double[][] data4thisblock = new double[block_size][sample_size];
+            line = br.readLine();//first line
+            temp = line.split(",");
+            int current_chr = Integer.parseInt(temp[0]);
+            int total_var_in_chr = 0; // TODO: Find purpose of this variable
+            int current_block = 0;
+            int num_of_variants_in_block = 0;
+            while (line != null) {
+                temp = line.split(",");
+                int chr = Integer.parseInt(temp[0]);
+                if (chr != current_chr) {
+                    //output the final block to h5
+                    writer.float64().writeMatrixBlockWithOffset("/genotype/chr" + (current_chr) + "/position_fast",
+                            data4thisblock, num_of_variants_in_block, sample_size, current_block * block_size, 0L);
+                    data4thisblock = new double[block_size][sample_size];
+                    num_of_variants_in_block = 0;
+                    current_block = 0;
+                    current_chr = chr;
+                    total_var_in_chr = 0;
+                } else {//chr==current_chr
+                    if (num_of_variants_in_block == block_size) {
+                        //output one block to h5
+                        writer.float64().writeMatrixBlock("/genotype/chr" + (current_chr) + "/position_fast",
+                                data4thisblock, current_block, 0);
+                        data4thisblock = new double[block_size][sample_size];
+                        num_of_variants_in_block = 0;
+                        current_block++;
+                    }
+                }
+                for (int k = 0; k < sample_size; k++) {
+                    data4thisblock[num_of_variants_in_block][k] = Double.parseDouble(temp[k + 2]);
+                }
+                num_of_variants_in_block++;
+                total_var_in_chr++;
+                line = br.readLine();
+            }// write the final block:
+            writer.float64().writeMatrixBlockWithOffset("/genotype/chr" + (current_chr) + "/position_fast",
+                    data4thisblock, num_of_variants_in_block, sample_size, current_block * block_size, 0L);
+            //write the indexes files
+            System.out.println("Finished writing genotypes. Now the HDF5 data is ready to use.");
+            writer.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new VariantsDouble(file_hdf5);
+    }
+
 //	/*
 //	 * maf count
 //	 */

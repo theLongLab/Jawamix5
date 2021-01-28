@@ -3,6 +3,9 @@ package mixedmodel;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import Region_Emmax.Region_EMMAX;
@@ -56,7 +59,7 @@ public class JAWAMix5 {
 			"\n\thdf52csv"+
 			"\n\tsimpel";
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		// Intro header if no function is specified. Provides a basic usage example.
 		if(args.length==0){
 			System.out.println("==========================================\n"+mit+"\n==========================================\n");
@@ -352,7 +355,7 @@ public class JAWAMix5 {
 				System.out.println("Import genotype from .csv file to .hdf5 file.");
 				System.out.println("Usage: \n\t<-ig\tinput_genotype_file>\n\t" +
 						"<-o\tout_put_hdf5_file>\n\t" +
-						"[-type\ttype<byte|double> (df=double)]\n\t" +
+						"[-type\ttype<byte|double|weighted> (df=double)]\n\t" +
 						"[-b\tblock_size (df=5000)]\n\t");
 				System.exit(0);
 			}else{
@@ -372,6 +375,8 @@ public class JAWAMix5 {
 						VariantsDouble.importCSV(input, output, block_size);
 					else if(import_type.equals("byte"))
 						VariantsByte.importCSV(input, output, block_size);
+					else if(import_type.equals("weighted"))
+						VariantsDouble.importWeightedCSV(input, output, block_size);
 				}
 			}
 
@@ -421,8 +426,10 @@ public class JAWAMix5 {
 					System.out.println("Input or output can't be null!");
 				} else {
 					if (phe_index == -1) {
-						//TODO: Add check for output folder existing and create if not
-						if (ocma = true) {
+						if(!Files.exists(Paths.get(output_folder))){
+							Files.createDirectories(Paths.get(output_folder));
+						}
+						if (ocma == true) {
 							EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 									maf_threshold_plot, plot);
 						} else {
@@ -430,9 +437,11 @@ public class JAWAMix5 {
 									maf_threshold_plot, plot);
 						}
 					} else {
-						//TODO: Add check for output folder existing and create if not
+						if(!Files.exists(Paths.get(output_folder))){
+							Files.createDirectories(Paths.get(output_folder));
+						}
 						if (region_info == null) {
-							if (ocma = true) {
+							if (ocma == true) {
 								EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 										phe_index, maf_threshold_plot, plot);
 							} else {
