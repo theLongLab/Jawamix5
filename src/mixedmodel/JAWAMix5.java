@@ -69,7 +69,7 @@ public class JAWAMix5 {
 		}
 		String function=args[0];	//Gets the argument supplied (name of the function to be run)
 
-
+        
 		//#####################################################################################
 		// SIMPEL Function Initialization
 		//#####################################################################################
@@ -211,7 +211,7 @@ public class JAWAMix5 {
 			}
 		}
 
-
+               
 		//#####################################################################################
 		// Kinship Function Initialization
 		//#####################################################################################
@@ -263,12 +263,68 @@ public class JAWAMix5 {
 					}
 				}
 			}
-
-
+		}
+		
+        
+		//#####################################################################################
+		// Kinship_Weighted Function Initialization
+		//#####################################################################################
+		else if (function.equals("kinshipweighted")) {    // Calculating the Kinship Matrix
+			if (args.length == 1) {
+				System.out.println("Compute IBS/RRM kinship matrix required for other analyses.");
+				System.out.println("Usage: \n\t<-ig\tinput_genotype_file>\n\t" +
+						"<-o\toutput_prefix>\n\t" +
+						"[-w\ttiling_window_size(bp) (df=WG)]\n\t" +
+						"[-m\tmethod (df=IBS)]\n\t" +
+						//"[-maf\tmin-MAF (df=0)]\n\t" +
+						"[-scale\tmax_genotype_coding (df=2)]\n\t");
+				System.exit(0);
+			} else {
+				String input = null, output_folder = null;
+				int tiling_window_size = -1;
+				//double scale = 2.0, maf = 0;
+				double scale = 2.0;
+				String method = "IBS";
+				for (int k = 1; k < args.length; k++) {
+					if (args[k].startsWith("-")) {    // Setting arguments for kinship function
+						if (args[k].equals("-ig")) input = args[k + 1];
+						else if (args[k].equals("-o")) output_folder = args[k + 1];
+						else if (args[k].equals("-w")) tiling_window_size = Integer.parseInt(args[k + 1]);
+						else if (args[k].equals("-m")) method = args[k + 1];
+						//else if (args[k].equals("-maf")) maf = Double.parseDouble(args[k + 1]);
+						else if (args[k].equals("-scale")) scale = Double.parseDouble(args[k + 1]);
+					}
+				}
+				if (input == null || output_folder == null) {
+					System.out.println("Input or output-folder can't be null!");
+				} else {
+					if (tiling_window_size != -1) {
+						LocalKinshipAnalyzer analyzer = new LocalKinshipAnalyzer(input, tiling_window_size, null);
+						analyzer.calculating_kinship_tiling_windows(output_folder, scale);
+					} else { //	tiling_window_size==-1, i.e., whole-genome
+						if (method.equals("IBS")) {
+							VariantsDouble calculator = new VariantsDouble(input);
+							System.out.println("Calculating global IBS kinship for " + input);
+							calculator.calculate_raw_ibs_weighted_kinship(output_folder + ".raw.IBS", scale);
+							KinshipMatrix.re_scale_kinship_matrix(output_folder + ".raw.IBS", output_folder + ".rescaled.IBS");
+						} else if (method.equals("RRM")) {
+							VariantsDouble calculator = new VariantsDouble(input);
+							System.out.println("Calculating global RRM kinship for " + input);
+							calculator.calculate_WG_RRM_weighted_kinship(output_folder + ".RRM", scale);
+							//VariantsDouble.re_scale_kinship_matrix(output_folder+".kinship.RRM", output_folder+".kinship.rescaled.RRM");
+						} else {
+							System.out.println("Method " + method + " is not supported. It can only be IBS or RRM.");
+						}
+					}
+				}
+			}
+		}
+		
+		       		
 			//#####################################################################################
 			// Char2Num Function Initialization
 			// #####################################################################################
-		}else if(function.equals("char2num")){
+		 else if(function.equals("char2num")){
 			if(args.length==1){
 				System.out.println("Convert char-coded genotype CSV file to number-coded genotype CSV file ready for \"import\"");
 				System.out.println("Usage: \n\t<-ig\tinput_genotype_file>\n\t" +
