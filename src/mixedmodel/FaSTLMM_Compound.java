@@ -68,11 +68,11 @@ public class FaSTLMM_Compound extends FaSTLMM {
 		double[] diag= new double[this.sample_size];
 		for(int i=0;i<this.sample_size;i++){
 	//		if(this.reml_eig_L.eigenvalues[i]>0)
-				diag[i]=1.0/Math.sqrt(this.S[i]+this.delta_null);
+				diag[i]=1.0/Math.sqrt(this.S[i]+this.delta_null); //(S+delta_null)^(-1/2), no initialization of delta_null, delta_null=0
 		}
 		for(int i=0;i<this.sample_size;i++){
 			for(int j=0;j<this.sample_size;j++){
-				transformation_matrix_array[i][j]=this.global_Ut.getEntry(i,j)*diag[i]; 
+				transformation_matrix_array[i][j]=this.global_Ut.getEntry(i,j)*diag[i]; //Get the entry in the specified row and column.
 			}
 		}
 		this.global_Ut=null;
@@ -123,10 +123,10 @@ public class FaSTLMM_Compound extends FaSTLMM {
 			BufferedWriter bw=new BufferedWriter(new FileWriter(mlr_output_file));
 			bw.write("#SampleSize="+this.sample_size+ "; REML="+this.Likelihood_null+"; " +
 					"h0-heritability="+this.sigma_g_null/(this.sigma_e_null+this.sigma_g_null) +"; delta="+this.delta_null+"\n");
-			bw.write("compound(chr:start:end_chr:start_end), p-value, variance_local, variance_global, variance_e\n");	
+			bw.write("compound(chr:start:end_chr:start_end), best_ml, p-value, variance_local, variance_global, variance_e\n");	
 			final double[] all_one=new double[this.sample_size];
 			Arrays.fill(all_one, 1);
-			final double[] all_one_gt=this.transformation_matrix.operate(all_one);
+			final double[] all_one_gt=this.transformation_matrix.operate(all_one); //Returns the result of multiplying this by the vector v.
 			int total=0;
 			int[] low_counts={0};			
 			for(int compound_index=0;compound_index<compounds.length;compound_index++){
@@ -176,16 +176,20 @@ public class FaSTLMM_Compound extends FaSTLMM {
 			double[][] transformed_data=FaSTLMM.transform_X_by_Ut(transformation_matrix, data_matching_phenotype);
 			double[][] X_for_null=new double[1][];
 			X_for_null[0]=all_one_gt.clone();
+			
 			VarComp_Result result_null=FaSTLMM_FullRank.fullRankSolver_FixedEffects_ML(X_for_null, this.Y_global_transformed.clone(), 
 					all_one, 0);
 			double ml_null=result_null.ml;
+			
+			
 			if(data_matching_phenotype.length<sample_size){ //low rank
 				//System.out.println("Low-Rank chr"+(chr+1)+" win "+start);
 				low_full_counts[0]++;
 				double[] Y_new_original=this.Y_global_transformed;
 				//FaSTLMM.normalize_terms_withSqrtNumVarDivided(transformed_data); NO NEED TO NORMALIZE AGAIN!!!
 				SingularValueDecomposition local_svd=new SingularValueDecomposition(
-						(new Array2DRowRealMatrix(transformed_data)).transpose());						
+						(new Array2DRowRealMatrix(transformed_data)).transpose());	
+				
 				double[] S=local_svd.getSingularValues();
 				for(int k=0;k<S.length;k++)S[k]=(S[k]*S[k]);
 				RealMatrix local_U1t= local_svd.getUT();
@@ -201,7 +205,7 @@ public class FaSTLMM_Compound extends FaSTLMM {
 						transformed_Y,Y_transformed2, S, ml_null, local_U1t, local_IminusU1U1t);								
 				if(result!=null){
 					double total_variance=result.sigma_g+result.sigma_e;//*(1+this.delta_null);
-					bw.write(compound_name + ", "+result.pvalue+", "+
+					bw.write(compound_name + ", "+result.ml+", "+result.pvalue+", "+
 							result.sigma_g/total_variance+", "+(result.sigma_e/total_variance)*(1/(1+this.delta_null))+", "+ 
 							(result.sigma_e/total_variance)*(this.delta_null/(1+this.delta_null))+"\n");
 					//System.out.println("Succ finsihed chr"+(chr+1)+" win "+start);
@@ -223,9 +227,10 @@ public class FaSTLMM_Compound extends FaSTLMM {
 					//System.out.println(ml_null+","+this.Likelihood_null);
 					VarComp_Result result=FaSTLMM_FullRank.fullRankSolver_FixedEffects_ML(transformed_X, transformed_Y, 
 							S, ml_null);
+					
 					if(result!=null){
 						double total_variance=result.sigma_g+result.sigma_e;//*(1+this.delta_null);
-						bw.write(compound_name+", "+result.pvalue+", "+
+						bw.write(compound_name+", "+result.ml+", "+result.pvalue+", "+
 								result.sigma_g/total_variance+", "+(result.sigma_e/total_variance)*(1/(1+this.delta_null))+", "+ 
 								(result.sigma_e/total_variance)*(this.delta_null/(1+this.delta_null))+"\n");
 				}				
