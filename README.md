@@ -154,6 +154,7 @@ Options:
 - -min_size: min_sample_size (n=40)
 - -step:	the	size	of	searching	grid.	The	smaller,	the	better	resolution	of	the
 analysis,	but	also	slower.
+Note: For likelihood ratio tests developed to correct marginal effect, please contact authors. 
 
 
 **rare**:	Run	rare	variants	analysis	using	both	standard	aggregate test and	another	aggregate	test leveraging	potential	synthetic	associations.	Population	structure	will	be	controlled	by	mixed	model.  
