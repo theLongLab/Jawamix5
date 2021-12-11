@@ -131,7 +131,7 @@ Mandatory	parameters:
 - -w: tiling	window	size	(it	should	be	consistent	with	the	kinship	files and	must therefore be	the	same	as	specified	when	running	“kinship”	function.)
 - -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
 
-**compoundX**:	refers to ILMM (Interaction-integrated Linear Mixed Model) method which run	local	variance component	analysis for the	genome based on imputting regions. To run compoundX, please download the executable Jawamix5_202109.jar file. 
+**compoundX**:	refers to ILMM (Interaction-integrated Linear Mixed Model) method which run	local	variance component	analysis for the	genome based on imputting regions. To run compoundX, please refer to the source file or contact the author. 
 
 Mandatory	parameters:
 - -ig:	input	genotype	file	in	HDF5	format
