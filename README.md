@@ -131,30 +131,23 @@ Mandatory	parameters:
 - -w: tiling	window	size	(it	should	be	consistent	with	the	kinship	files and	must therefore be	the	same	as	specified	when	running	“kinship”	function.)
 - -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
 
-**compound**:	refers to ILMM (Interaction-integrated Linear Mixed Model) method which run	local	variance component	analysis for the	genome based on imputting regions. 
+**compoundX**:	refers to ILMM (Interaction-integrated Linear Mixed Model) method which run	local	variance component	analysis for the	genome based on imputting regions. To run compoundX, please download the executable Jawamix5_202109.jar file. 
 
 Mandatory	parameters:
 - -ig:	input	genotype	file	in	HDF5	format
 - -ip:	phenotype	file
+- -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
 - -o:	output	folder
 - -ic: input regions
-- -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
+- -emres:	emmax_res_file
+- -m: number of SNPs selected from each region to interact
+- -index:	phenotype_index (df=ALL, start from zero)
 
 - An example for the input file for -ic:
-
 
 |Index|Region 1 (chr;start;end)|Region 2|
 |---|---|---|
 |C0|1;840000;850000|1;890000;900000|
-
-Options:
-- -ik_l:	folder	contains	local	kinship	files	generated	by	function	“kinship”. Since	this	method	assumes	the	naming	conventions	of	all	kinship	files,	it	is	strongly	recommended	to	use	function	“kinship”	of	JAWAMix5	to	generate	the	kinship	files.
-- -method: full, grid, transform
-- -index:	the	phenotype	index	(start	from	zero)	in	the	event	that	there	are	multiple	phenotypes	in	the	input	file.	If	not	specified,	by	default	all	the	phenotypes	will	be	analyzed	sequentially.
-- -min_size: min_sample_size (n=40)
-- -step:	the	size	of	searching	grid.	The	smaller,	the	better	resolution	of	the
-analysis,	but	also	slower.
-Note: For likelihood ratio tests developed to correct marginal effect, please contact authors. 
 
 
 **rare**:	Run	rare	variants	analysis	using	both	standard	aggregate test and	another	aggregate	test leveraging	potential	synthetic	associations.	Population	structure	will	be	controlled	by	mixed	model.  
