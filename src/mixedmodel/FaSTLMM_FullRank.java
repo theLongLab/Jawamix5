@@ -12,6 +12,8 @@ import org.apache.commons.math3.optimization.ConvergenceChecker;
 import org.apache.commons.math3.optimization.GoalType;
 import org.apache.commons.math3.optimization.univariate.BrentOptimizer;
 import org.apache.commons.math3.optimization.univariate.UnivariatePointValuePair;
+
+
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.util.MathArrays;
 
@@ -248,7 +250,8 @@ public class FaSTLMM_FullRank extends FaSTLMM{
 	}	
 	
 	public static VarComp_Result fullRankSolver_FixedEffects_ML(double[][] transformed_X, double[] transformed_Y, 
-			double[] S, double ml_null){				
+			double[] S, double ml_null){
+		//??//
 		BrentOptimizer bo=new BrentOptimizer(FaSTLMM.brent_rel, FaSTLMM.brent_abs);	
 		double best_delta=-1;
 		double best_ml=-(Double.MAX_VALUE);

@@ -70,8 +70,6 @@ public class CompoundAnalyzer {
 	}
 	
 	
-	
-	
 	public static void main(String[] args) {
 		long start=System.currentTimeMillis();
 
