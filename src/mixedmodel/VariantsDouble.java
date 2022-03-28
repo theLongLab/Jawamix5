@@ -5,10 +5,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -28,6 +25,7 @@ import nam.RILs;
 //import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 
 import ch.systemsx.cisd.base.mdarray.MDDoubleArray;
+import org.jetbrains.annotations.Nullable;
 
 public class VariantsDouble {
 
@@ -566,6 +564,210 @@ public class VariantsDouble {
                                     String csv_char, String csv_num) {
         tped2csv_char(input_tfam, input_tped, csv_char);
         char2num(csv_char, csv_num);
+    }
+
+    public static void tped2csv_ref(String input_tfam, String input_tped,
+                                    String csv_num, String fasta_file) {
+        try{
+            LinkedHashSet<String> fasta_chromosomes = (fasta_detect_chromosome(fasta_file));
+            LinkedHashSet<String> tped_chromosomes = (tped_detect_chromosome(input_tped));
+
+            Hashtable<String,String> chromosome_table = new Hashtable<>();
+            for(String curr_chromosome : tped_chromosomes){
+                if (fasta_chromosomes.contains(curr_chromosome)){
+                    chromosome_table.put(curr_chromosome, curr_chromosome);
+                }else if(fasta_chromosomes.contains("chr" + curr_chromosome)){
+                    chromosome_table.put(curr_chromosome, "chr" + curr_chromosome);
+                }else{
+                    System.out.println("Could not detect chromosome " + curr_chromosome + " in fasta file as itself nor as chr" + curr_chromosome + ". \n" +
+                            "Please verify before attempting conversion or remove invalid chromosomes.");
+                    System.exit(0);
+                }
+            }
+
+            Enumeration<String> e = chromosome_table.keys();
+            System.out.println("Creating lookup table for chromosome reference between files:" );
+            while (e.hasMoreElements()) {
+                String tped_chromosome = e.nextElement();
+                System.out.println(tped_chromosome + " -> " + chromosome_table.get(tped_chromosome));
+            }
+
+            BufferedReader br_t = new BufferedReader(new FileReader(input_tped));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(csv_num));
+
+            BufferedReader br_f = new BufferedReader(new FileReader(input_tfam));
+            String line = br_f.readLine();
+
+            int sample_size = 0;
+            bw.write("CHR,LOC");
+            while (line != null) {
+                sample_size++;
+                bw.write("," + line.split(" ")[1]);
+                line = br_f.readLine();
+            }
+            bw.write("\n");
+
+            line = br_t.readLine();
+            String curr_chromosome = "";
+            String curr_seq = "";
+            int line_count = 1;
+
+            System.out.print("Processing...");
+
+            while(line!=null){
+                String[] temp = line.split("\\s+",5);
+                String[] alleles = temp[4].split("\\s+");
+
+                if(alleles.length/2 != sample_size){
+                    System.out.println("Incorrect sample size at line " + line_count + ". Please make sure tped file matches the tfam file.");
+                    System.exit(0);
+                }
+
+                for(int i=0; i<alleles.length; i++){
+                    alleles[i] = alleles[i].toLowerCase();
+                }
+                String[] unique = Arrays.stream(alleles).distinct().toArray(String[]::new);
+
+                if(curr_chromosome!=chromosome_table.get(temp[0])) {
+
+                    curr_seq = fasta_get_chromosome(fasta_file, chromosome_table.get(temp[0]));
+                    if(curr_seq.equals("")){
+                        System.out.println("Error retrieving data for chromosome " + chromosome_table.get(temp[0]) + ".");
+                        System.exit(0);
+                    }else{
+                        curr_chromosome=chromosome_table.get(temp[0]);
+                    }
+
+                }
+
+                String ref_allele = String.valueOf(curr_seq.charAt(Integer.parseInt(temp[3])-1)).toLowerCase();
+
+                String csv_line = temp[0] + "," + temp[3] + "," + alleles_to_num(alleles, ref_allele) + "\n";
+
+                bw.write(csv_line);
+
+//                if(!matched){
+//                    String curr_alleles = "{";
+//                    for(String str : unique){
+//                        curr_alleles = curr_alleles + str + ",";
+//                    }
+//                    curr_alleles = curr_alleles.substring(0, curr_alleles.length()-1);
+//                    curr_alleles = curr_alleles + "} ref: " + ref_allele;
+//                    System.out.println(curr_alleles);
+//                }
+
+                System.out.print("\rNumber of lines processed: " + line_count);
+
+                line = br_t.readLine();
+                line_count++;
+            }
+            System.out.print("\n");
+
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String alleles_to_num(String[] alleles, String ref_allele){
+        StringBuilder sb = new StringBuilder();
+        for(int i=0; i<alleles.length; i=i+2){
+            if(alleles[i].equals(ref_allele) & alleles[i+1].equals(ref_allele)){
+                sb.append("0");
+            }else if(alleles[i].equals(ref_allele) ^ alleles[i+1].equals(ref_allele)){
+                sb.append("1");
+            }else{
+                sb.append("2");
+            }
+            sb.append(",");
+        }
+        return sb.toString().substring(0, sb.length()-1);
+    }
+
+    public static String fasta_get_chromosome(String fasta_file, String chromosome){
+        String curr_seq = "";
+
+        try {
+//            System.out.println("\nLooking for reference sequence for chromosome " + chromosome);
+
+            BufferedReader br_r = new BufferedReader(new FileReader(fasta_file));
+
+            boolean found = false;
+            String fasta_line = br_r.readLine();
+
+            while(fasta_line!=null){
+                if(fasta_line.equals(">" + chromosome)){
+//                    System.out.println("Found start of reference.");
+                    fasta_line = br_r.readLine();
+                    int count = 1;
+                    //System.out.print("Reading lines...");
+
+                    StringBuilder sb = new StringBuilder();
+                    while(fasta_line!=null){
+                        if(!fasta_line.startsWith(">")){
+                            sb.append(fasta_line);
+                        }else{
+//                            System.out.println("Found and read reference sequence.");
+                            curr_seq = sb.toString();
+//                            System.out.println("Chr start: " + curr_seq.substring(0, 100));
+//                            System.out.println("Chr end: " + curr_seq.substring(curr_seq.length()-100));
+                            found = true;
+                            break;
+                        }
+                        fasta_line = br_r.readLine();
+                        count++;
+                    }
+                }
+                if(found)break;
+                fasta_line = br_r.readLine();
+            }
+            if(!found){
+                System.out.println("Error reading data for chromosome " + chromosome + " from fasta file.");
+                System.exit(0);
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        return curr_seq;
+    }
+
+    public static LinkedHashSet<String> fasta_detect_chromosome(String fasta_file) {
+        LinkedHashSet<String> chromosomes = new LinkedHashSet<String>();
+        System.out.println("Detecting chromosomes in reference FASTA file...");
+        try{
+            BufferedReader br = new BufferedReader(new FileReader(fasta_file));
+            String line = br.readLine();
+
+            while (line != null) {
+                if (line.startsWith(">")){
+                    chromosomes.add(line.replace(">",""));
+                }
+                line = br.readLine();
+            }
+
+            return chromosomes;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return chromosomes;
+        }
+    }
+
+    public static LinkedHashSet<String> tped_detect_chromosome(String tped_file) {
+        LinkedHashSet<String> chromosomes = new LinkedHashSet<String>();
+        System.out.println("Detecting chromosomes in input tped file...");
+        try{
+            BufferedReader br = new BufferedReader(new FileReader(tped_file));
+            String line = br.readLine();
+
+            while (line != null) {
+                chromosomes.add(line.split("\\s+", 2)[0]);
+                line = br.readLine();
+            }
+
+            return chromosomes;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return chromosomes;
+        }
     }
 
     public static String one2two(String snp) {
