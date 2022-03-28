@@ -42,6 +42,8 @@ public class JAWAMix5 {
 			"\n\temmax_stepwise" +
 			"\n\tlm_stepwise" +
 			"\n\temmax_select" +
+			"\n\temmax_select_file" +
+			"\n\temmax_select_regions" +
 			"\n\tlm_select" +
 			"\n\tlocal" +
 			"\n\tcompound" +
@@ -291,23 +293,34 @@ public class JAWAMix5 {
 			//#####################################################################################
 		}else if(function.equals("tped2num")){
 			if(args.length==1){
-				System.out.println("Convert char-coded genotype PLINK tped file to number-coded genotype CSV file ready for \"import\"");
+				System.out.println("Convert char-coded genotype PLINK tped file to number-coded genotype CSV file ready for \"import\"\n" +
+						"A FASTA reference file may be provided to ensure alleles are coded accordingly. (Homozygous\n" +
+						"reference as 0, heterozygous as 1 and homozygous alternate as 2. If a FASTA file is not provided\n" +
+						"homozygous major alleles are coded as 0 and homozygous minor alleles are coded as 2 with\n" +
+						"heterozygotes coded as 1.");
 				System.out.println("Usage: \n\t<-tped\tinput_tped_file>\n\t" +
 						"<-tfam\tinput_tfam_file>\n\t" +
-						"<-o\toutput_file_prefix>\n\t");
+						"<-o\toutput_file_prefix>\n\t" +
+						"[-ref\treference_fasta_file\n\t");
 				System.exit(0);
 			}else{
-				String input_tped=null, input_tfam=null,  output=null;
+				String input_tped=null, input_tfam=null,  output=null, fasta_file=null;
 				for(int k=1;k<args.length;k++){
 					if(args[k].startsWith("-")){
 						if(args[k].equals("-tped"))input_tped=args[k+1];
 						else if(args[k].equals("-tfam"))input_tfam=args[k+1];
 						else if(args[k].equals("-o"))output=args[k+1];
+						else if(args[k].equals("-ref"))fasta_file=args[k+1];
 			}
-				}if(input_tped==null||input_tfam==null||output==null){
+				}if(input_tped==null||input_tfam==null||output==null) {
 					System.out.println("Input or output can't be null!");
 				}else{
-					VariantsDouble.tped2csv_num(input_tfam, input_tped, output+".char.csv", output+".num.csv");
+					if(fasta_file==null){
+						VariantsDouble.tped2csv_num(input_tfam, input_tped, output+".char.csv", output+".num.csv");
+					}else{
+						VariantsDouble.tped2csv_ref(input_tfam, input_tped, output+".num.csv", fasta_file);
+					}
+
 				}
 			}
 
@@ -396,7 +409,6 @@ public class JAWAMix5 {
 				System.exit(0);
 			} else {
 				String input_geno = "", input_pheno = null, output_folder = null, kinship = null, region_info = null;
-				;
 				double p_after_corr = 1000, maf_threshold_plot = 0.05;
 				int phe_index = -1, min_sample_size = 100, round = 1;
 				boolean plot = true;
@@ -543,6 +555,119 @@ public class JAWAMix5 {
 					System.out.println("Input or output can't be null!");
 				}else{
 					EMMAX.emmax_select(input_geno, input_pheno, kinship, phe_index, output_file, chrs, locs);
+				}
+			}
+
+			//#####################################################################################
+			// emmax_select_file Function Initialization
+			//#####################################################################################
+		}else if(function.equals("emmax_select_file")){
+			if(args.length==1){
+				//TODO: Add description of format of phenotype file expected
+				System.out.println("Run EMMAX for phenotype(s) for selected SNPs.");
+				System.out.println("Usage: \n\t<-ig\tinput_genotype_file>\n\t" +
+						"<-ip\tphenotype_file>\n\t" +
+						"<-sf\tsnp_file>\n\t" +
+						"<-o\toutput_folder>\n\t" +
+						"<-ik\tkinship_file>\n\t" +
+						"[-p\t<pvalue_before_multi.correct.> (df=0.05)]\n\t" +
+						"[-index\t<phenotype_index> (df=ALL, start from zero)]\n\t" +
+						"[-min_size\t<min_sample_size> (df=100)]\n\t" +
+						"[-maf\t<maf_threshold_plot> (df=0.05)]\n\t");
+				System.exit(0);
+			} else {
+				String input_geno = "", input_pheno = null, output_folder = null, kinship = null, region_info = null, snp_file = null;
+				double p_after_corr = 0.05, maf_threshold_plot = 0.05;
+				int phe_index = -1, min_sample_size = 100, round = 1;
+				for (int k = 1; k < args.length; k++) {
+					if (args[k].startsWith("-")) {
+						if (args[k].equals("-ig")) input_geno = args[k + 1];
+						else if (args[k].equals("-ip")) input_pheno = args[k + 1];
+						else if (args[k].equals("-sf")) snp_file = args[k + 1];
+						else if (args[k].equals("-ik")) kinship = args[k + 1];
+						else if (args[k].equals("-o")) output_folder = args[k + 1];
+						else if (args[k].equals("-index")) phe_index = Integer.parseInt(args[k + 1]);
+						else if (args[k].equals("-p")) p_after_corr = Double.parseDouble(args[k + 1]);
+						else if (args[k].equals("-min_size")) min_sample_size = Integer.parseInt(args[k + 1]);
+						else if (args[k].equals("-maf")) maf_threshold_plot = Double.parseDouble(args[k + 1]);
+					}
+				}
+				if (input_geno == null || input_pheno == null || kinship == null || output_folder == null) {
+					System.out.println("Input or output can't be null!");
+				} else {
+					if (phe_index == -1) {
+						EMMAX.emmax_select_file(input_geno, input_pheno, kinship, output_folder, p_after_corr, min_sample_size,
+								snp_file);
+					} else {
+						EMMAX.emmax_select_file(input_geno, input_pheno, kinship, output_folder, p_after_corr, min_sample_size,
+								phe_index, snp_file);
+					}
+				}
+				}
+
+			//TODO: Remove debugging function before merge with master
+		}else if(function.equals("plot_this")){
+			if(args.length==1){
+				System.out.println("Plot a file based on results");
+				System.out.println("Usage: \n\t<-r\tinput_results_file>\n\t" +
+						"[-maf\t<maf_threshold_plot> (df=0.05)]\n\t");
+				System.exit(0);
+			} else {
+				String input_results = "";
+				double maf_threshold_plot = 0.05;
+				for (int k = 1; k < args.length; k++) {
+					if (args[k].startsWith("-")) {
+						if (args[k].equals("-r")) input_results = args[k + 1];
+						else if (args[k].equals("-maf")) maf_threshold_plot = Double.parseDouble(args[k + 1]);
+					}
+				}
+				EMMAX.make_plot_one_phen(input_results, maf_threshold_plot);
+			}
+
+			//#####################################################################################
+			// emmax_select_regions Function Initialization
+			//#####################################################################################
+		}else if(function.equals("emmax_select_regions")){
+			if(args.length==1){
+				//TODO: Add description of format of phenotype file expected
+				System.out.println("Run EMMAX for phenotype(s) for selected regions.");
+				System.out.println("Usage: \n\t<-ig\tinput_genotype_file>\n\t" +
+						"<-ip\tphenotype_file>\n\t" +
+						"<-rf\tregion_file>\n\t" +
+						"<-o\toutput_folder>\n\t" +
+						"<-ik\tkinship_file>\n\t" +
+						"[-p\t<pvalue_before_multi.correct.> (df=0.05)]\n\t" +
+						"[-index\t<phenotype_index> (df=ALL, start from zero)]\n\t" +
+						"[-min_size\t<min_sample_size> (df=100)]\n\t" +
+						"[-maf\t<maf_threshold_plot> (df=0.05)]\n\t");
+				System.exit(0);
+			} else {
+				String input_geno = "", input_pheno = null, output_folder = null, kinship = null, region_file = null;
+				double p_after_corr = 0.05, maf_threshold_plot = 0.05;
+				int phe_index = -1, min_sample_size = 100, round = 1;
+				for (int k = 1; k < args.length; k++) {
+					if (args[k].startsWith("-")) {
+						if (args[k].equals("-ig")) input_geno = args[k + 1];
+						else if (args[k].equals("-ip")) input_pheno = args[k + 1];
+						else if (args[k].equals("-rf")) region_file = args[k + 1];
+						else if (args[k].equals("-ik")) kinship = args[k + 1];
+						else if (args[k].equals("-o")) output_folder = args[k + 1];
+						else if (args[k].equals("-index")) phe_index = Integer.parseInt(args[k + 1]);
+						else if (args[k].equals("-p")) p_after_corr = Double.parseDouble(args[k + 1]);
+						else if (args[k].equals("-min_size")) min_sample_size = Integer.parseInt(args[k + 1]);
+						else if (args[k].equals("-maf")) maf_threshold_plot = Double.parseDouble(args[k + 1]);
+					}
+				}
+				if (input_geno == null || input_pheno == null || kinship == null || output_folder == null) {
+					System.out.println("Input or output can't be null!");
+				} else {
+					if (phe_index == -1) {
+						EMMAX.emmax_select_regions(input_geno, input_pheno, kinship, output_folder, p_after_corr, min_sample_size,
+								region_file);
+					} else {
+						EMMAX.emmax_select_regions(input_geno, input_pheno, kinship, output_folder, p_after_corr, min_sample_size,
+								phe_index, region_file);
+					}
 				}
 			}
 

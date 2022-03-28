@@ -1,11 +1,10 @@
 package mixedmodel;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 import myPlotLab.MyHeatMap;
 import myPlotLab.MyHistogram;
@@ -15,6 +14,28 @@ import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
 import ch.systemsx.cisd.base.mdarray.MDDoubleArray;
 import ch.systemsx.cisd.hdf5.HDF5MDDataBlock;
+
+class Variants {
+    int chr;
+    int pos;
+
+    public Variants(int chr, int pos)
+    {
+        this.chr = chr;
+        this.pos = pos;
+    }
+}
+
+class SortVariants implements Comparator<Variants> {
+    public int compare(Variants a, Variants b)
+    {
+        if(a.chr < b.chr) return -1;
+        if(a.chr > b.chr) return 1;
+        if(a.pos < b.pos) return -1;
+        if(a.pos > b.pos) return 1;
+        return 0;
+    }
+}
 
 public class EMMAX {
 
@@ -187,6 +208,563 @@ public class EMMAX {
             bw.write("\nAdjustedRSquared:\t" + result[2][0]);
             bw.write("\nModel_Pvalue(F-statistics):\t" + result[3][0] + "\n");
             bw.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void emmax_select_file(String genotype_hdf5_file, String phe_file, String kinship_file, String output_folder,
+                                         double p_value_before_correction, int min_sample_size, String snp_file) {
+        try {
+            Path path = Paths.get(snp_file);
+            int lines = 0;
+
+            lines = (int) Files.lines(path).count();
+
+            int[] chrs = new int[lines - 1];
+            int[] locs = new int[lines - 1];
+
+            BufferedReader br = new BufferedReader(new FileReader(snp_file));
+            String line = br.readLine();//header
+            String[] temp = line.split("\t");
+            int curr_line = 0;
+            line = br.readLine();
+            while (line != null) {
+                temp = line.split("\t");
+                if (temp.length > 2) {
+                    System.out.println("SNP file can only have two columns. (Chromosome <tab> Location)." +
+                            "Program will now exit.");
+                    System.exit(0);
+                }
+                chrs[curr_line] = Integer.parseInt(temp[0]);
+                locs[curr_line] = Integer.parseInt(temp[1]);
+                line = br.readLine();
+                curr_line++;
+            }
+
+            int num_snp = chrs.length;
+
+            File dir = new File(output_folder);
+            if (!dir.exists()) dir.mkdirs();
+
+            VariantsDouble genotype = new VariantsDouble(genotype_hdf5_file);
+            MultiPhenotype phenotypeS = new MultiPhenotype(phe_file);
+            String pheno_prog = "";
+            for (int phe_index = 0; phe_index < phenotypeS.num_of_pheno; phe_index++) {
+                pheno_prog = String.format("%.2f", (float)phe_index/phenotypeS.num_of_pheno*100);
+                EMMA emma = new EMMA(phenotypeS.phenotypes[phe_index], genotype, new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
+                if (emma.sample_size >= min_sample_size) {
+                    System.out.println("Running Phenotype:" + phe_index + ":" + emma.phenotype.phe_id);
+                    String outputfile = output_folder + "/EMMAX." + phe_index + "_" + emma.phenotype.phe_id + ".top";
+                    long startTime = System.currentTimeMillis();
+
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(outputfile));
+                    // run REML
+                    int[] indexes0 = {}, chrs0 = {};
+                    emma.REMLE(emma.phenotype.values, emma.cbind(chrs0, indexes0), null);
+                    System.out.println("Sample size: " + emma.sample_size);
+                    System.out.println("remle_REML=" + emma.remle_REML);
+                    System.out.println("remle_delta=" + emma.remle_delta);
+                    System.out.println("remle_ve=" + emma.remle_ve);
+                    System.out.println("remle_vg=" + emma.remle_vg);
+                    System.out.println("remle_pseudo-heritability=" + emma.heritability);
+                    double[][] decomposed_array = emma.reml_decompositioned_array();
+                    emma.phenotype.generate_new_Y_by_multiplying(decomposed_array);
+                    double[] intsept = new double[emma.sample_size];
+                    for (int i = 0; i < emma.sample_size; i++) {
+                        for (int j = 0; j < emma.sample_size; j++) {
+                            intsept[i] += decomposed_array[i][j];
+                        }
+                    }
+
+                    double corrected_threshold = p_value_before_correction / num_snp;
+                    bw.write("#SampleSize=" + emma.sample_size + "; REML=" + emma.remle_REML + "; pseudo-heritability=" + emma.heritability
+                            + "; Transform=" + emma.phenotype.transform_approach + "(P=" + emma.phenotype.normality_pvaule + ")" +
+                            "; Phenotype=" + emma.phenotype.phe_id + "; GenotypeFile=" + genotype_hdf5_file + "\n");
+                    bw.write("#chr,location,pvalue,AdjustedR2,coefficient,Sd_Err,MAF_count\n");
+                    System.out.println("start EMMAX");
+
+                    double prog = 0;
+                    int prog_value = 0;
+                    for (int curr_snp = 0; curr_snp < num_snp; curr_snp++) {
+                        prog = (float)curr_snp/num_snp * 100;
+                        if(Math.floor(prog) > prog_value){
+                            prog_value = (int) Math.floor(prog);
+                            System.out.print("Variant processing percentage: " + prog_value + "% (Phenotypes: " + pheno_prog +"%)\r");
+                        }
+                        double[] the_full_list = emma.genotype.load_one_variant_by_location(chrs[curr_snp] - 1, locs[curr_snp]);
+                        double[] X_ori = new double[emma.sample_size];
+                        for (int sample_index = 0; sample_index < emma.sample_size; sample_index++) {
+                            X_ori[sample_index] = the_full_list[emma.indexes_with_phenotype_in_genotype[sample_index]];
+                        }
+                        boolean the_same = true;
+                        for (int sample_index = 1; sample_index < emma.sample_size; sample_index++) {
+                            if (Double.compare(X_ori[sample_index], X_ori[0]) != 0) the_same = false;
+                        }
+                        if (the_same) continue;
+                        double[][] Xs_after = new double[emma.sample_size][2];
+                        for (int i = 0; i < emma.sample_size; i++) {
+                            Xs_after[i][0] = intsept[i];
+                            for (int j = 0; j < emma.sample_size; j++) {
+                                Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
+                            }
+                        }
+                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+                        if (result != null) {
+                            result[3] = new double[1];
+                            result[3][0] = EMMAX.mafc(X_ori);
+                            String out_res = EMMAX.results2string(result, corrected_threshold);
+                            if (out_res != null) {
+                                bw.write((chrs[curr_snp]) + "," + locs[curr_snp] + "," + out_res + "\n");
+                            }
+                        }
+                    }
+                    bw.close();
+                    //if (plot) make_plot_one_phen(outputfile, maf_plot_threshold);
+
+                    System.out.println("\nTime Consumed: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds.\n");
+                } else {
+                    System.out.println("Not running due to too small sample size:" + emma.sample_size);
+                }
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void emmax_select_file(String genotype_hdf5_file, String phe_file, String kinship_file, String output_folder,
+                                         double p_value_before_correction, int min_sample_size, int phe_index,
+                                         String snp_file) {
+        try {
+            Path path = Paths.get(snp_file);
+            int lines = 0;
+
+            lines = (int) Files.lines(path).count();
+
+            int[] chrs = new int[lines - 1];
+            int[] locs = new int[lines - 1];
+
+            BufferedReader br = new BufferedReader(new FileReader(snp_file));
+            String line = br.readLine();//header
+            String[] temp = line.split("\t");
+            int curr_line = 0;
+            line = br.readLine();
+            while (line != null) {
+                temp = line.split("\t");
+                if (temp.length > 2) {
+                    System.out.println("SNP file can only have two columns. (Chromosome <tab> Location)." +
+                            "Program will now exit.");
+                    System.exit(0);
+                }
+                chrs[curr_line] = Integer.parseInt(temp[0]);
+                locs[curr_line] = Integer.parseInt(temp[1]);
+                line = br.readLine();
+                curr_line++;
+            }
+
+            int num_snp = chrs.length;
+
+            VariantsDouble genotype = new VariantsDouble(genotype_hdf5_file);
+            MultiPhenotype phenotypeS = new MultiPhenotype(phe_file);
+            EMMA emma = new EMMA(phenotypeS.phenotypes[phe_index], genotype, new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
+            if (emma.sample_size >= min_sample_size) {
+                System.out.println("Running Phenotype:" + phe_index + ":" + emma.phenotype.phe_id);
+                String outputfile = output_folder + "/EMMAX." + phe_index + "_" + emma.phenotype.phe_id + ".top";
+                long startTime = System.currentTimeMillis();
+
+                File dir = new File(output_folder);
+                if (!dir.exists()) dir.mkdirs();
+
+                BufferedWriter bw = new BufferedWriter(new FileWriter(outputfile));
+                // run REML
+                int[] indexes0 = {}, chrs0 = {};
+                emma.REMLE(emma.phenotype.values, emma.cbind(chrs0, indexes0), null);
+                System.out.println("Sample size: " + emma.sample_size);
+                System.out.println("remle_REML=" + emma.remle_REML);
+                System.out.println("remle_delta=" + emma.remle_delta);
+                System.out.println("remle_ve=" + emma.remle_ve);
+                System.out.println("remle_vg=" + emma.remle_vg);
+                System.out.println("remle_pseudo-heritability=" + emma.heritability);
+                double[][] decomposed_array = emma.reml_decompositioned_array();
+                emma.phenotype.generate_new_Y_by_multiplying(decomposed_array);
+                double[] intsept = new double[emma.sample_size];
+                for (int i = 0; i < emma.sample_size; i++) {
+                    for (int j = 0; j < emma.sample_size; j++) {
+                        intsept[i] += decomposed_array[i][j];
+                    }
+                }
+
+                double corrected_threshold = p_value_before_correction / num_snp;
+                bw.write("#SampleSize=" + emma.sample_size + "; REML=" + emma.remle_REML + "; pseudo-heritability=" + emma.heritability
+                        + "; Transform=" + emma.phenotype.transform_approach + "(P=" + emma.phenotype.normality_pvaule + ")" +
+                        "; Phenotype=" + emma.phenotype.phe_id + "; GenotypeFile=" + genotype_hdf5_file + "\n");
+                bw.write("#chr,location,pvalue,AdjustedR2,coefficient,Sd_Err,MAF_count\n");
+                System.out.println("start EMMAX");
+
+                for (int curr_snp = 0; curr_snp < num_snp; curr_snp++) {
+                    System.out.println("Currently processing variant " + (curr_snp + 1) + " of " + num_snp + "...");
+                    double[] the_full_list = emma.genotype.load_one_variant_by_location(chrs[curr_snp] - 1, locs[curr_snp]);
+                    double[] X_ori = new double[emma.sample_size];
+                    for (int sample_index = 0; sample_index < emma.sample_size; sample_index++) {
+                        X_ori[sample_index] = the_full_list[emma.indexes_with_phenotype_in_genotype[sample_index]];
+                    }
+                    boolean the_same = true;
+                    for (int sample_index = 1; sample_index < emma.sample_size; sample_index++) {
+                        if (Double.compare(X_ori[sample_index], X_ori[0]) != 0) the_same = false;
+                    }
+                    if (the_same) continue;
+                    double[][] Xs_after = new double[emma.sample_size][2];
+                    for (int i = 0; i < emma.sample_size; i++) {
+                        Xs_after[i][0] = intsept[i];
+                        for (int j = 0; j < emma.sample_size; j++) {
+                            Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
+                        }
+                    }
+                    double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+                    if (result != null) {
+                        result[3] = new double[1];
+                        result[3][0] = EMMAX.mafc(X_ori);
+                        String out_res = EMMAX.results2string(result, corrected_threshold);
+                        if (out_res != null) {
+                            bw.write((chrs[curr_snp]) + "," + locs[curr_snp] + "," + out_res + "\n");
+                        }
+                    }
+                }
+                bw.close();
+                //if (plot) make_plot_one_phen(outputfile, maf_plot_threshold);
+
+                System.out.println("\nTime Consumed: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds.\n");
+            } else {
+                System.out.println("Not running due to too small sample size:" + emma.sample_size);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void emmax_select_regions(String genotype_hdf5_file, String phe_file, String kinship_file,
+                                            String output_folder, double p_value_before_correction,
+                                            int min_sample_size, String region_file) {
+        try {
+            Path path = Paths.get(region_file);
+            int lines = 0;
+
+            lines = (int) Files.lines(path).count();
+
+            int[] chrs = new int[lines - 1];
+            int[] start = new int[lines - 1];
+            int[] end = new int[lines - 1];
+
+            BufferedReader br = new BufferedReader(new FileReader(region_file));
+            String line = br.readLine();//header
+            String[] temp = line.split("\t");
+            int curr_line = 0;
+            line = br.readLine();
+            while (line != null) {
+                temp = line.split("\t");
+                if (temp.length > 2) {
+                    System.out.println("Region file can only have two columns. (Chromosome <tab> Start:End)." +
+                            "Program will now exit.");
+                    System.exit(0);
+                }
+                chrs[curr_line] = Integer.parseInt(temp[0]);
+                start[curr_line] = Integer.parseInt(temp[1].split(":")[0]);
+                end[curr_line] = Integer.parseInt(temp[1].split(":")[1]);
+                line = br.readLine();
+                curr_line++;
+            }
+
+            TreeSet<Variants> snps = new TreeSet<>(new SortVariants());
+
+            File dir = new File(output_folder);
+            if (!dir.exists()) dir.mkdirs();
+
+            VariantsDouble genotype = new VariantsDouble(genotype_hdf5_file);
+            MultiPhenotype phenotypeS = new MultiPhenotype(phe_file);
+
+            for (int region = 0; region < chrs.length; region++){
+                int[] curr_geno = genotype.locations[chrs[region]-1];
+                int start_index = Arrays.binarySearch(curr_geno, start[region]);
+                if (start_index < 0) {// start_location has not been found, thus we make use of the insertion-point returned by
+                    // the binarySearch:
+                    // The insertion point is defined as the point at which the key would be inserted into the array: the index
+                    // of the first element greater than the key, or a.length if all elements in the array are less than the
+                    // specified key.
+                    start_index = -(start_index + 1);
+                }
+                if (start_index >= curr_geno.length){
+                    System.out.println("Error locating start index for Chr:" + (chrs[region]-1) + " Region:" +
+                            start[region] + ":" + end[region]);
+                    continue;
+                }
+                int end_index = Arrays.binarySearch(curr_geno, end[region]);
+                if (end_index < 0) {// end_location has not been found, thus we make use of the insertion-point returned by the
+                    // binarySearch:
+                    end_index = -(end_index + 1) - 1;
+                }
+                if (end_index < 0){
+                    System.out.println("Error locating end index for Chr:" + (chrs[region]-1) + " Region:" +
+                            start[region] + ":" + end[region]);
+                    continue;
+                }
+                if(end_index < start_index){
+                    System.out.println("End index for Chr:" + (chrs[region]-1) + " Region:" +
+                            start[region] + ":" + end[region] + " appears to be smaller than start index.");
+                    continue;
+                }
+
+                int[] curr_vars = Arrays.copyOfRange(curr_geno, start_index, end_index+1);
+
+                for(int i=0; i<curr_vars.length; i++) {
+                    snps.add(new Variants(chrs[region], curr_vars[i]));
+                    // System.out.println(chrs[region] + "\t" + curr_vars[i]);
+                }
+            }
+
+            System.out.println("Number of variants: " + snps.size());
+
+            String pheno_prog = "";
+            for (int phe_index = 0; phe_index < phenotypeS.num_of_pheno; phe_index++) {
+                pheno_prog = String.format("%.2f", (float)phe_index/phenotypeS.num_of_pheno*100);
+                EMMA emma = new EMMA(phenotypeS.phenotypes[phe_index], genotype, new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
+                if (emma.sample_size >= min_sample_size) {
+                    System.out.println("Running Phenotype:" + phe_index + ":" + emma.phenotype.phe_id);
+                    String outputfile = output_folder + "/EMMAX." + phe_index + "_" + emma.phenotype.phe_id + ".top";
+                    long startTime = System.currentTimeMillis();
+
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(outputfile));
+                    // run REML
+                    int[] indexes0 = {}, chrs0 = {};
+                    emma.REMLE(emma.phenotype.values, emma.cbind(chrs0, indexes0), null);
+                    System.out.println("Sample size: " + emma.sample_size);
+                    System.out.println("remle_REML=" + emma.remle_REML);
+                    System.out.println("remle_delta=" + emma.remle_delta);
+                    System.out.println("remle_ve=" + emma.remle_ve);
+                    System.out.println("remle_vg=" + emma.remle_vg);
+                    System.out.println("remle_pseudo-heritability=" + emma.heritability);
+                    double[][] decomposed_array = emma.reml_decompositioned_array();
+                    emma.phenotype.generate_new_Y_by_multiplying(decomposed_array);
+                    double[] intsept = new double[emma.sample_size];
+                    for (int i = 0; i < emma.sample_size; i++) {
+                        for (int j = 0; j < emma.sample_size; j++) {
+                            intsept[i] += decomposed_array[i][j];
+                        }
+                    }
+
+                    double corrected_threshold = p_value_before_correction / snps.size();
+                    bw.write("#SampleSize=" + emma.sample_size + "; REML=" + emma.remle_REML + "; pseudo-heritability=" + emma.heritability
+                            + "; Transform=" + emma.phenotype.transform_approach + "(P=" + emma.phenotype.normality_pvaule + ")" +
+                            "; Phenotype=" + emma.phenotype.phe_id + "; GenotypeFile=" + genotype_hdf5_file + "\n");
+                    bw.write("#chr,location,pvalue,AdjustedR2,coefficient,Sd_Err,MAF_count\n");
+                    System.out.println("start EMMAX");
+
+                    double prog = 0;
+                    int prog_value = 0;
+                    int snp_count = 0;
+                    for (Variants curr_var : snps) {
+                        prog = (float)snp_count/snps.size() * 100;
+                        if(Math.floor(prog) > prog_value){
+                            prog_value = (int) Math.floor(prog);
+                            System.out.print("Variant processing percentage: " + prog_value + "% (Phenotypes: " + pheno_prog +"%)\r");
+                        }
+                        double[] the_full_list = emma.genotype.load_one_variant_by_location(curr_var.chr - 1, curr_var.pos);
+                        double[] X_ori = new double[emma.sample_size];
+                        for (int sample_index = 0; sample_index < emma.sample_size; sample_index++) {
+                            X_ori[sample_index] = the_full_list[emma.indexes_with_phenotype_in_genotype[sample_index]];
+                        }
+                        boolean the_same = true;
+                        for (int sample_index = 1; sample_index < emma.sample_size; sample_index++) {
+                            if (Double.compare(X_ori[sample_index], X_ori[0]) != 0) the_same = false;
+                        }
+                        if (the_same) continue;
+                        double[][] Xs_after = new double[emma.sample_size][2];
+                        for (int i = 0; i < emma.sample_size; i++) {
+                            Xs_after[i][0] = intsept[i];
+                            for (int j = 0; j < emma.sample_size; j++) {
+                                Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
+                            }
+                        }
+                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+                        if (result != null) {
+                            result[3] = new double[1];
+                            result[3][0] = EMMAX.mafc(X_ori);
+                            String out_res = EMMAX.results2string(result, corrected_threshold);
+                            if (out_res != null) {
+                                bw.write((curr_var.chr) + "," + curr_var.pos + "," + out_res + "\n");
+                            }
+                        }
+                        snp_count++;
+                    }
+                    bw.close();
+                    //if (plot) make_plot_one_phen(outputfile, maf_plot_threshold);
+
+                    System.out.println("\nTime Consumed: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds.\n");
+                } else {
+                    System.out.println("Not running due to too small sample size:" + emma.sample_size);
+                }
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void emmax_select_regions(String genotype_hdf5_file, String phe_file, String kinship_file,
+                                            String output_folder, double p_value_before_correction,
+                                            int min_sample_size, int phe_index, String region_file) {
+        try {
+            Path path = Paths.get(region_file);
+            int lines = 0;
+
+            lines = (int) Files.lines(path).count();
+
+            int[] chrs = new int[lines - 1];
+            int[] start = new int[lines - 1];
+            int[] end = new int[lines - 1];
+
+            BufferedReader br = new BufferedReader(new FileReader(region_file));
+            String line = br.readLine();//header
+            String[] temp = line.split("\t");
+            int curr_line = 0;
+            line = br.readLine();
+            while (line != null) {
+                temp = line.split("\t");
+                if (temp.length > 2) {
+                    System.out.println("Region file can only have two columns. (Chromosome <tab> Start:End)." +
+                            "Program will now exit.");
+                    System.exit(0);
+                }
+                chrs[curr_line] = Integer.parseInt(temp[0]);
+                start[curr_line] = Integer.parseInt(temp[1].split(":")[0]);
+                end[curr_line] = Integer.parseInt(temp[1].split(":")[1]);
+                line = br.readLine();
+                curr_line++;
+            }
+
+            TreeSet<Variants> snps = new TreeSet<>(new SortVariants());
+
+            File dir = new File(output_folder);
+            if (!dir.exists()) dir.mkdirs();
+
+            VariantsDouble genotype = new VariantsDouble(genotype_hdf5_file);
+            MultiPhenotype phenotypeS = new MultiPhenotype(phe_file);
+
+            for (int region = 0; region < chrs.length; region++){
+                int[] curr_geno = genotype.locations[chrs[region]-1];
+                int start_index = Arrays.binarySearch(curr_geno, start[region]);
+                if (start_index < 0) {// start_location has not been found, thus we make use of the insertion-point returned by
+                    // the binarySearch:
+                    // The insertion point is defined as the point at which the key would be inserted into the array: the index
+                    // of the first element greater than the key, or a.length if all elements in the array are less than the
+                    // specified key.
+                    start_index = -(start_index + 1);
+                }
+                if (start_index >= curr_geno.length){
+                    System.out.println("Error locating start index for Chr:" + (chrs[region]-1) + " Region:" +
+                            start[region] + ":" + end[region]);
+                    continue;
+                }
+                int end_index = Arrays.binarySearch(curr_geno, end[region]);
+                if (end_index < 0) {// end_location has not been found, thus we make use of the insertion-point returned by the
+                    // binarySearch:
+                    end_index = -(end_index + 1) - 1;
+                }
+                if (end_index < 0){
+                    System.out.println("Error locating end index for Chr:" + (chrs[region]-1) + " Region:" +
+                            start[region] + ":" + end[region]);
+                    continue;
+                }
+                if(end_index < start_index){
+                    System.out.println("End index for Chr:" + (chrs[region]-1) + " Region:" +
+                            start[region] + ":" + end[region] + " appears to be smaller than start index.");
+                    continue;
+                }
+
+                int[] curr_vars = Arrays.copyOfRange(curr_geno, start_index, end_index+1);
+
+                for(int i=0; i<curr_vars.length; i++) {
+                    snps.add(new Variants(chrs[region], curr_vars[i]));
+                    // System.out.println(chrs[region] + "\t" + curr_vars[i]);
+                }
+            }
+
+            System.out.println("Number of variants: " + snps.size());
+
+            EMMA emma = new EMMA(phenotypeS.phenotypes[phe_index], genotype, new KinshipMatrix(kinship_file).kinship_matrix.getData());//genotype.read_in_kinship(kinship_file));
+            if (emma.sample_size >= min_sample_size) {
+                System.out.println("Running Phenotype:" + phe_index + ":" + emma.phenotype.phe_id);
+                String outputfile = output_folder + "/EMMAX." + phe_index + "_" + emma.phenotype.phe_id + ".top";
+                long startTime = System.currentTimeMillis();
+
+                BufferedWriter bw = new BufferedWriter(new FileWriter(outputfile));
+                // run REML
+                int[] indexes0 = {}, chrs0 = {};
+                emma.REMLE(emma.phenotype.values, emma.cbind(chrs0, indexes0), null);
+                System.out.println("Sample size: " + emma.sample_size);
+                System.out.println("remle_REML=" + emma.remle_REML);
+                System.out.println("remle_delta=" + emma.remle_delta);
+                System.out.println("remle_ve=" + emma.remle_ve);
+                System.out.println("remle_vg=" + emma.remle_vg);
+                System.out.println("remle_pseudo-heritability=" + emma.heritability);
+                double[][] decomposed_array = emma.reml_decompositioned_array();
+                emma.phenotype.generate_new_Y_by_multiplying(decomposed_array);
+                double[] intsept = new double[emma.sample_size];
+                for (int i = 0; i < emma.sample_size; i++) {
+                    for (int j = 0; j < emma.sample_size; j++) {
+                        intsept[i] += decomposed_array[i][j];
+                    }
+                }
+
+                double corrected_threshold = p_value_before_correction / snps.size();
+                bw.write("#SampleSize=" + emma.sample_size + "; REML=" + emma.remle_REML + "; pseudo-heritability=" + emma.heritability
+                        + "; Transform=" + emma.phenotype.transform_approach + "(P=" + emma.phenotype.normality_pvaule + ")" +
+                        "; Phenotype=" + emma.phenotype.phe_id + "; GenotypeFile=" + genotype_hdf5_file + "\n");
+                bw.write("#chr,location,pvalue,AdjustedR2,coefficient,Sd_Err,MAF_count\n");
+                System.out.println("start EMMAX");
+
+                int snp_count = 0;
+                for (Variants curr_var : snps) {
+                    System.out.println("Currently processing variant " + (snp_count + 1) + " of " + snps.size() + "...");
+                    double[] the_full_list = emma.genotype.load_one_variant_by_location((curr_var.chr - 1), curr_var.pos);
+                    double[] X_ori = new double[emma.sample_size];
+                    for (int sample_index = 0; sample_index < emma.sample_size; sample_index++) {
+                        X_ori[sample_index] = the_full_list[emma.indexes_with_phenotype_in_genotype[sample_index]];
+                    }
+                    boolean the_same = true;
+                    for (int sample_index = 1; sample_index < emma.sample_size; sample_index++) {
+                        if (Double.compare(X_ori[sample_index], X_ori[0]) != 0) the_same = false;
+                    }
+                    if (the_same) continue;
+                    double[][] Xs_after = new double[emma.sample_size][2];
+                    for (int i = 0; i < emma.sample_size; i++) {
+                        Xs_after[i][0] = intsept[i];
+                        for (int j = 0; j < emma.sample_size; j++) {
+                            Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
+                        }
+                    }
+                    double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+                    if (result != null) {
+                        result[3] = new double[1];
+                        result[3][0] = EMMAX.mafc(X_ori);
+                        String out_res = EMMAX.results2string(result, corrected_threshold);
+                        if (out_res != null) {
+                            bw.write((curr_var.chr) + "," + curr_var.pos + "," + out_res + "\n");
+                        }
+                    }
+                    snp_count++;
+                }
+                bw.close();
+                //if (plot) make_plot_one_phen(outputfile, maf_plot_threshold);
+
+                System.out.println("\nTime Consumed: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds.\n");
+            } else {
+                System.out.println("Not running due to too small sample size:" + emma.sample_size);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }

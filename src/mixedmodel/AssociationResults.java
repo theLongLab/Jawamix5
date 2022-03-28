@@ -126,7 +126,7 @@ public class AssociationResults {
 			ArrayList<Integer> chr_ids=new ArrayList<Integer>();
 			HashMap<Integer, Integer> chr_lens=new HashMap<Integer, Integer>();
 			while(line!=null){
-				String[] temp=line.split(sep);
+				String[] temp = line.split(sep);
 				double maf_count= Double.parseDouble(temp[6]);
 				double pvalue=Double.parseDouble(temp[2]);
 				if(pvalue<pvalue_threshold && maf_count>=maf_count_threshold)this.num_of_var++;
