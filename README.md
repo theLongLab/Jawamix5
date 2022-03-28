@@ -63,7 +63,8 @@ Mandatory	parameters:
 Options:
 - -b: block	size	(number	of	variants	per	HDF5	block),	default	is	5,000	variants.	This	parameter	should	be	tuned	subject	to	the	different	sample size.	When	sample	size	is	too	large,	one	has	to	decrease	the	block	size	or	increase	the	RAM.
 
-**tped2num**:	Convert char-coded genotype PLINK tped file to number-coded genotype CSV file ready for "import". A FASTA reference file may be provided to ensure alleles are coded accordingly. (Homozygous reference as 0, heterozygous as 1 and homozygous alternate as 2. If a FASTA file is not provided homozygous major alleles are coded as 0 and homozygous minor alleles are coded as 2 with heterozygotes coded as 1.
+**tped2num**:	Convert char-coded genotype PLINK tped file to number-coded genotype CSV file ready for "import". A FASTA reference file may be provided to ensure alleles are coded accordingly. (Homozygous reference as 0, heterozygous as 1 and homozygous alternate as 2.) If a FASTA file is not provided homozygous major alleles are coded as 0 and homozygous minor alleles are coded as 2 with heterozygotes coded as 1.
+
 Mandatory	parameters:
 - -tped: input	genotype file in tped format (ACGT coded)
 - -tfam: input  phenotype file in tfam format
