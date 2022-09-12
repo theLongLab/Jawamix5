@@ -14,7 +14,6 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.stat.StatUtils;
-import org.apache.commons.math3.stat.correlation.Covariance;
 
 import nam.Cross_info;
 import nam.Founder;
@@ -25,7 +24,6 @@ import nam.RILs;
 //import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 
 import ch.systemsx.cisd.base.mdarray.MDDoubleArray;
-import org.jetbrains.annotations.Nullable;
 
 public class VariantsDouble {
 
@@ -1247,6 +1245,108 @@ public class VariantsDouble {
                                 }
                             }
                         }
+                    }
+                }
+                System.out.println("Finished Chr" + (chr + 1));
+            }
+            for (int i = 0; i < sample_size; i++) {
+                for (int j = i; j < sample_size; j++) {
+                    kinship[i][j] = kinship[i][j] / total_num_var_used[i][j];
+                    kinship[j][i] = kinship[i][j];
+                }
+            }
+            BufferedWriter bw = new BufferedWriter(new FileWriter(output_file));
+            for (int i = 0; i < sample_size - 1; i++) {
+                bw.write(this.sample_ids[i] + ",");
+            }
+            bw.write(this.sample_ids[sample_size - 1] + "\n");
+            for (int i = 0; i < sample_size; i++) {
+                for (int j = 0; j < sample_size - 1; j++) {
+                    bw.write(kinship[i][j] + ",");
+                }
+                bw.write(kinship[i][sample_size - 1] + "\n");
+            }
+            bw.close();
+            System.out.println("Global kinship (before rescale) has been written to " + output_file);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /*
+     * Weighted RRM by Qing Li (20220912)
+     */
+    public void calculate_WG_RRM_weighted_kinship(String output_file, double scale, double min_MAF, String wg) {
+        try {
+        	BufferedReader br =new BufferedReader(new FileReader(wg));
+        	ArrayList<HashMap<String, Double>> weightsArrayList = new ArrayList<HashMap<String, Double>>();
+        	String line=br.readLine();
+        	line=br.readLine();
+        	int current_chr =1;
+        	HashMap<String, Double> current_chr_weights = new HashMap<String, Double>();
+        	while(line!=null) {
+        		String[] lineList = line.split(" ");
+        		if(lineList.length == 6) {
+        			if(Integer.parseInt(lineList[1]) == current_chr) {
+            			String wg_key = lineList[0];
+            			double wg_value = Math.abs(Double.parseDouble(lineList[3])+Double.parseDouble(lineList[4]));
+            			if (!current_chr_weights.containsKey(wg_key)) {
+            				current_chr_weights.put(wg_key, wg_value);
+            			}else {//keep the larger weights
+            				double old_value = current_chr_weights.get(wg_key);
+            				if (Double.compare(wg_value, old_value) >0) {
+            					current_chr_weights.put(wg_key, wg_value);
+            				}
+            			}
+        			}else {
+        				System.out.println(current_chr+" "+ current_chr_weights.size());
+        				weightsArrayList.add(current_chr_weights);
+        				current_chr =Integer.parseInt(lineList[1]);
+        				current_chr_weights = new HashMap<String, Double>();
+            			String wg_key = lineList[0];
+            			double wg_value = Math.abs(Double.parseDouble(lineList[3])+Double.parseDouble(lineList[4]));
+            			current_chr_weights.put(wg_key, wg_value);
+        			}
+        		}else {
+        			System.out.println("Cannot seperate columns correctly. Please make sure white space as delimiter!");
+        			System.exit(0);
+        		}
+        		line=br.readLine();
+        	}
+        	br.close();        	
+            double[][] kinship = new double[this.sample_size][this.sample_size];
+            double[][] total_num_var_used = new double[this.sample_size][this.sample_size];
+            for (int chr = 0; chr < this.num_chrs; chr++) {
+            	int var_index_in_chr=0;
+            	HashMap<String, Double> current_chr_weights_dict = weightsArrayList.get(chr);
+                for (HDF5MDDataBlock<MDDoubleArray> block : this.position_fast_blocks[chr]) {
+                    double[][] data4thisblock = block.getData().toMatrix();
+                    for (int var_index = 0; var_index < data4thisblock.length; var_index++) {
+                    	String var_position = Integer.toString(this.locations[chr][var_index_in_chr]);
+                    	double var_weight = 0;
+                    	if (current_chr_weights_dict.containsKey(var_position)) {
+                    		var_weight = current_chr_weights_dict.get(var_position);
+                    	}
+                    	System.out.println(chr+" "+var_position+" "+Double.toString(var_weight));
+                        if (KinshipMatrix.maf(data4thisblock[var_index], scale) < min_MAF) continue;
+                        double mean = myMathLib.StatFuncs.mean_NaN(data4thisblock[var_index]);
+                        if (Double.isNaN(mean)) {
+                            System.out.println("All subjects are NaN at a SNP in Chr" + (chr + 1));
+                            continue;
+                        }
+                        double sd = Math.sqrt(myMathLib.StatFuncs.var_NaN(data4thisblock[var_index], mean));
+                        double[] new_snp = new double[this.sample_size];
+                        for (int k = 0; k < this.sample_size; k++)
+                            new_snp[k] = var_weight * (data4thisblock[var_index][k] - mean) / sd;
+                        for (int i = 0; i < sample_size; i++) {
+                            for (int j = i; j < sample_size; j++) {
+                                if ((!Double.isNaN(new_snp[i])) && (!Double.isNaN(new_snp[j]))) {
+                                    kinship[i][j] = kinship[i][j] + (new_snp[i] * new_snp[j]);
+                                    total_num_var_used[i][j]++;
+                                }
+                            }
+                        }
+                        var_index_in_chr=var_index_in_chr+1;
                     }
                 }
                 System.out.println("Finished Chr" + (chr + 1));
