@@ -54,6 +54,7 @@ public class JAWAMix5 {
 			"\n\ttped2num" +
 			"\n\theritability"+
 			"\n\tkinship"+
+			"\n\tkinshipwe"+
 			"\n\trelationship"+
 			"\n\thdf52csv"+
 			"\n\tsimpel";
@@ -262,12 +263,69 @@ public class JAWAMix5 {
 					}
 				}
 			}
-
-
-			//#####################################################################################
-			// Char2Num Function Initialization
-			// #####################################################################################
-		}else if(function.equals("char2num")){
+		}
+		
+		//#####################################################################################
+		// Weighted Kinship Function Initialization
+		//#####################################################################################
+		else if (function.equals("kinshipwe")) {    // Calculating the Kinship Matrix
+			if (args.length == 1) {
+				System.out.println("Compute weighted IBS/RRM kinship matrix");
+				System.out.println("Usage: \n\t<-ig\tinput_genotype_file>\n\t" +
+						"<-o\toutput_prefix>\n\t" +
+						"[-w\ttiling_window_size(bp) (df=WG)]\n\t" +
+						"[-m\tmethod (df=RRM)]\n\t" +
+						"[-maf\tmin-MAF (df=0)]\n\t" +
+						"[-scale\tmax_genotype_coding (df=2)]\n\t"+
+						"[-wg\t weights file for SNPs]\n\t");
+				System.exit(0);
+			} else {
+				String input = null, output_folder = null;
+				int tiling_window_size = -1;
+				double scale = 2.0, maf = 0;
+				String method = "RRM";
+				String wg ="null";
+				for (int k = 1; k < args.length; k++) {
+					if (args[k].startsWith("-")) {    // Setting arguments for kinship function
+						if (args[k].equals("-ig")) input = args[k + 1];
+						else if (args[k].equals("-o")) output_folder = args[k + 1];
+						else if (args[k].equals("-w")) tiling_window_size = Integer.parseInt(args[k + 1]);
+						else if (args[k].equals("-m")) method = args[k + 1];
+						else if (args[k].equals("-maf")) maf = Double.parseDouble(args[k + 1]);
+						else if (args[k].equals("-scale")) scale = Double.parseDouble(args[k + 1]);
+						else if (args[k].equals("-wg")) wg = args[k + 1];
+					}
+				}
+				if (input == null || output_folder == null) {
+					System.out.println("Input or output-folder can't be null!");
+				} else {
+					if (tiling_window_size != -1) {
+						LocalKinshipAnalyzer analyzer = new LocalKinshipAnalyzer(input, tiling_window_size, null);
+						analyzer.calculating_kinship_tiling_windows(output_folder, scale);
+					} else { //	tiling_window_size==-1, i.e., whole-genome
+						if (method.equals("IBS")) {
+//							VariantsDouble calculator = new VariantsDouble(input);
+//							System.out.println("Calculating global IBS kinship for " + input);
+//							calculator.calculate_raw_ibs_kinship(output_folder + ".raw.IBS", scale, maf);
+//							KinshipMatrix.re_scale_kinship_matrix(output_folder + ".raw.IBS", output_folder + ".rescaled.IBS");
+							System.out.println("Will come up soon"); //Applications of weights to IBS requires to be further explored. 
+						} else if (method.equals("RRM")) {
+							VariantsDouble calculator = new VariantsDouble(input);
+							System.out.println("Calculating global RRM kinship for " + input);
+							calculator.calculate_WG_RRM_weighted_kinship(output_folder + ".RRMwe", scale, maf, wg);
+							//VariantsDouble.re_scale_kinship_matrix(output_folder+".kinship.RRM", output_folder+".kinship.rescaled.RRM");
+						} else {
+							System.out.println("Method " + method + " is not supported. It can only be IBS or RRM.");
+						}
+					}
+				}
+			}
+		}
+		
+		//#####################################################################################
+		// Char2Num Function Initialization
+		// #####################################################################################
+		else if(function.equals("char2num")){
 			if(args.length==1){
 				System.out.println("Convert char-coded genotype CSV file to number-coded genotype CSV file ready for \"import\"");
 				System.out.println("Usage: \n\t<-ig\tinput_genotype_file>\n\t" +
