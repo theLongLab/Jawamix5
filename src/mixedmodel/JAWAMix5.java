@@ -54,6 +54,7 @@ public class JAWAMix5 {
 			"\n\ttped2num" +
 			"\n\theritability"+
 			"\n\tkinship"+
+			"\n\tkinshipwe"+
 			"\n\trelationship"+
 			"\n\thdf52csv"+
 			"\n\tsimpel";
