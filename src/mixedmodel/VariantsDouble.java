@@ -1276,7 +1276,7 @@ public class VariantsDouble {
     /*
      * Weighted RRM by Qing Li (20220912)
      */
-    public void calculate_WG_RRM_weighted_kinship(String output_file, double scale, double min_MAF, String wg) {
+    public void calculate_WG_RRM_weighted_kinship(String output_file, double scale, double min_MAF, String wg, String verbose) {
         try {
         	BufferedReader br =new BufferedReader(new FileReader(wg));
         	ArrayList<HashMap<String, Double>> weightsArrayList = new ArrayList<HashMap<String, Double>>();
@@ -1299,7 +1299,9 @@ public class VariantsDouble {
             				}
             			}
         			}else {
-        				System.out.println(current_chr+" "+ current_chr_weights.size());
+        				if(verbose.equals("true")) {
+        					System.out.println(current_chr+" "+ current_chr_weights.size());
+        				}
         				weightsArrayList.add(current_chr_weights);
         				current_chr =Integer.parseInt(lineList[1]);
         				current_chr_weights = new HashMap<String, Double>();
@@ -1313,6 +1315,10 @@ public class VariantsDouble {
         		}
         		line=br.readLine();
         	}
+        	weightsArrayList.add(current_chr_weights); //Add weights from final chromosome. 
+			if(verbose.equals("true")) {
+				System.out.println(current_chr+" "+ current_chr_weights.size());
+			}
         	br.close();        	
             double[][] kinship = new double[this.sample_size][this.sample_size];
             double[][] total_num_var_used = new double[this.sample_size][this.sample_size];
@@ -1327,7 +1333,9 @@ public class VariantsDouble {
                     	if (current_chr_weights_dict.containsKey(var_position)) {
                     		var_weight = current_chr_weights_dict.get(var_position);
                     	}
-                    	System.out.println(chr+" "+var_position+" "+Double.toString(var_weight));
+        				if(verbose.equals("true")) {
+                        	System.out.println((chr+1)+" "+var_position+" "+Double.toString(var_weight));
+        				}
                         if (KinshipMatrix.maf(data4thisblock[var_index], scale) < min_MAF) continue;
                         double mean = myMathLib.StatFuncs.mean_NaN(data4thisblock[var_index]);
                         if (Double.isNaN(mean)) {
