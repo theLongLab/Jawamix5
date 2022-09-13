@@ -277,7 +277,8 @@ public class JAWAMix5 {
 						"[-m\tmethod (df=RRM)]\n\t" +
 						"[-maf\tmin-MAF (df=0)]\n\t" +
 						"[-scale\tmax_genotype_coding (df=2)]\n\t"+
-						"[-wg\t weights file for SNPs]\n\t");
+						"[-wg\t weights file for SNPs]\n\t"+
+						"[-v\t verbose (df=false, set to true to print out details)\n\t");
 				System.exit(0);
 			} else {
 				String input = null, output_folder = null;
@@ -285,6 +286,7 @@ public class JAWAMix5 {
 				double scale = 2.0, maf = 0;
 				String method = "RRM";
 				String wg ="null";
+				String verbose="null";
 				for (int k = 1; k < args.length; k++) {
 					if (args[k].startsWith("-")) {    // Setting arguments for kinship function
 						if (args[k].equals("-ig")) input = args[k + 1];
@@ -294,6 +296,7 @@ public class JAWAMix5 {
 						else if (args[k].equals("-maf")) maf = Double.parseDouble(args[k + 1]);
 						else if (args[k].equals("-scale")) scale = Double.parseDouble(args[k + 1]);
 						else if (args[k].equals("-wg")) wg = args[k + 1];
+						else if (args[k].equals("-v")) verbose = args[k + 1];
 					}
 				}
 				if (input == null || output_folder == null) {
@@ -312,7 +315,7 @@ public class JAWAMix5 {
 						} else if (method.equals("RRM")) {
 							VariantsDouble calculator = new VariantsDouble(input);
 							System.out.println("Calculating global RRM kinship for " + input);
-							calculator.calculate_WG_RRM_weighted_kinship(output_folder + ".RRMwe", scale, maf, wg);
+							calculator.calculate_WG_RRM_weighted_kinship(output_folder + ".RRMwe", scale, maf, wg, verbose);
 							//VariantsDouble.re_scale_kinship_matrix(output_folder+".kinship.RRM", output_folder+".kinship.rescaled.RRM");
 						} else {
 							System.out.println("Method " + method + " is not supported. It can only be IBS or RRM.");
@@ -492,7 +495,7 @@ public class JAWAMix5 {
 				} else {
 					if (phe_index == -1) {
 						//TODO: Add check for output folder existing and create if not
-						if (ocma = true) {
+						if (ocma == true) {
 							EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 									maf_threshold_plot, plot);
 						} else {
@@ -502,7 +505,7 @@ public class JAWAMix5 {
 					} else {
 						//TODO: Add check for output folder existing and create if not
 						if (region_info == null) {
-							if (ocma = true) {
+							if (ocma == true) {
 								EMMAX_OCMA.emmax_analysis(input_geno, input_pheno, kinship, output_folder, round, p_after_corr, min_sample_size,
 										phe_index, maf_threshold_plot, plot);
 							} else {
