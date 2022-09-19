@@ -487,7 +487,7 @@ public class JAWAMix5 {
 						else if (args[k].equals("-plot")) {
 							if (args[k + 1].equals("0")) plot = false;
 						} else if (args[k].equals("-ri")) region_info = args[k + 1];
-						else if (args[k].equals("-ocma")) ocma = false;
+						else if (args[k].equals("-ocma")) ocma = true;
 					}
 				}
 				if (input_geno == null || input_pheno == null || kinship == null || output_folder == null) {

@@ -612,33 +612,33 @@ public class VariantsDouble {
 
             System.out.print("Processing...");
 
-            while(line!=null){
-                String[] temp = line.split("\\s+",5);
+            while(line!=null) {
+                String[] temp = line.split("\\s+", 5);
                 String[] alleles = temp[4].split("\\s+");
 
-                if(alleles.length/2 != sample_size){
+                if (alleles.length / 2 != sample_size) {
                     System.out.println("Incorrect sample size at line " + line_count + ". Please make sure tped file matches the tfam file.");
                     System.exit(0);
                 }
 
-                for(int i=0; i<alleles.length; i++){
+                for (int i = 0; i < alleles.length; i++) {
                     alleles[i] = alleles[i].toLowerCase();
                 }
                 String[] unique = Arrays.stream(alleles).distinct().toArray(String[]::new);
 
-                if(curr_chromosome!=chromosome_table.get(temp[0])) {
+                if (curr_chromosome != chromosome_table.get(temp[0])) {
 
                     curr_seq = fasta_get_chromosome(fasta_file, chromosome_table.get(temp[0]));
-                    if(curr_seq.equals("")){
+                    if (curr_seq.equals("")) {
                         System.out.println("Error retrieving data for chromosome " + chromosome_table.get(temp[0]) + ".");
                         System.exit(0);
-                    }else{
-                        curr_chromosome=chromosome_table.get(temp[0]);
+                    } else {
+                        curr_chromosome = chromosome_table.get(temp[0]);
                     }
 
                 }
 
-                String ref_allele = String.valueOf(curr_seq.charAt(Integer.parseInt(temp[3])-1)).toLowerCase();
+                String ref_allele = String.valueOf(curr_seq.charAt(Integer.parseInt(temp[3]) - 1)).toLowerCase();
 
                 String csv_line = temp[0] + "," + temp[3] + "," + alleles_to_num(alleles, ref_allele) + "\n";
 
@@ -660,7 +660,7 @@ public class VariantsDouble {
                 line_count++;
             }
             System.out.print("\n");
-
+            bw.close();
         }catch (Exception e) {
             e.printStackTrace();
         }
