@@ -9,6 +9,7 @@ import java.util.*;
 import myPlotLab.MyHeatMap;
 import myPlotLab.MyHistogram;
 import myPlotLab.MyManhattanPlot;
+import flanagan.math.Matrix;
 
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
@@ -200,7 +201,13 @@ public class EMMAX {
                     }
                 }
             }
-            double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+
+            // Setting the first column of X_ori as 1 - Archibald
+            for (int i=0; i<emma.sample_size; i++){
+                Xs_ori[i][0] = 1;
+            }
+            double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after, emma, Xs_ori);
+
             bw.write("RegressionParameters:");
             for (int k = 0; k < result[0].length; k++) bw.write("\t" + result[0][k]);
             bw.write("\nIndividual_P-values(t-tests):");
@@ -309,7 +316,16 @@ public class EMMAX {
                                 Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
                             }
                         }
-                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+
+                        //Transpose X_ori to X_ori_transpose make it a sample_sizex2 vector.- Archibald
+                        //Setting the first column is all 1
+                        double[][] X_ori_transpose = new double[emma.sample_size][2];
+                        for (int i=0; i<emma.sample_size; i++){
+                            X_ori_transpose[i][0] = 1;
+                            X_ori_transpose[i][1] = X_ori[i];
+                        }
+                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after, emma, X_ori_transpose);
+
                         if (result != null) {
                             result[3] = new double[1];
                             result[3][0] = EMMAX.mafc(X_ori);
@@ -422,7 +438,15 @@ public class EMMAX {
                             Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
                         }
                     }
-                    double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+
+                    //Transpose X_ori to X_ori_transpose make it a sample_sizex2 vector.- Archibald
+                    //First column is all 1
+                    double[][] X_ori_transpose = new double[emma.sample_size][2];
+                    for (int i=0; i<emma.sample_size; i++){
+                        X_ori_transpose[i][0] = 1;
+                        X_ori_transpose[i][1] = X_ori[i];
+                    }
+                    double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after,emma, X_ori_transpose);
                     if (result != null) {
                         result[3] = new double[1];
                         result[3][0] = EMMAX.mafc(X_ori);
@@ -587,7 +611,16 @@ public class EMMAX {
                                 Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
                             }
                         }
-                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+
+                        //Transpose X_ori to X_ori_transpose make it a sample_sizex2 vector.- Archibald
+                        //First column is all 1
+                        double[][] X_ori_transpose = new double[emma.sample_size][2];
+                        for (int i=0; i<emma.sample_size; i++){
+                            X_ori_transpose[i][0] = 1;
+                            X_ori_transpose[i][1] = X_ori[i];
+                        }
+                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after, emma, X_ori_transpose);
+
                         if (result != null) {
                             result[3] = new double[1];
                             result[3][0] = EMMAX.mafc(X_ori);
@@ -746,7 +779,15 @@ public class EMMAX {
                             Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
                         }
                     }
-                    double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+
+                    //Transpose X_ori to X_ori_transpose make it a sample_sizex2 vector.- Archibald
+                    //First column is all 1
+                    double[][] X_ori_transpose = new double[emma.sample_size][2];
+                    for (int i=0; i<emma.sample_size; i++){
+                        X_ori_transpose[i][0] = 1;
+                        X_ori_transpose[i][1] = X_ori[i];
+                    }
+                    double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after, emma, X_ori_transpose);
                     if (result != null) {
                         result[3] = new double[1];
                         result[3][0] = EMMAX.mafc(X_ori);
@@ -824,6 +865,16 @@ public class EMMAX {
                 for (int sample_index = 0; sample_index < emma.sample_size; sample_index++)
                     Xs[sample_index][k] = selected_genotypes[sample_index][k - 1];
             }
+
+            // Initialization the X_ori - Archibald
+            double[][] X_ori= new double[emma.sample_size][round_index + 1];
+            for (int i=0; i<emma.sample_size; i++){
+                X_ori[i][0] = 1;
+                for (int k = 1; k < round_index; k++) {
+                    X_ori[i][k] = selected_genotypes[i][k-1];
+                }
+            }
+
             // add the new marker and do regression.
             double best_P = 1;
             int best_P_index = -1;
@@ -833,7 +884,8 @@ public class EMMAX {
                 if (best_indexes_set.contains(var_index)) continue;
                 for (int sample_index = 0; sample_index < emma.sample_size; sample_index++)
                     Xs[sample_index][round_index - 1] = genotype_after_trans[sample_index][var_index];
-                double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs);
+
+                double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs, emma, X_ori);
 //						double[][] result=EMMAX.reg2results_lm(reg1, emma.sample_size);
                 if (result != null && Double.compare(best_vc, result[2][0]) < 0) {
                     best_P_index = var_index;
@@ -905,7 +957,15 @@ public class EMMAX {
                                 Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
                             }
                         }
-                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+
+                        //Transpose X_ori to X_ori_transpose make it a vector of dimension of (sample_size x 2).- Archibald
+                        //First column is all 1
+                        double[][] X_ori_transpose = new double[emma.sample_size][2];
+                        for (int i=0; i<emma.sample_size; i++){
+                            X_ori_transpose[i][0] = 1;
+                            X_ori_transpose[i][1] = X_ori[i];
+                        }
+                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after, emma, X_ori_transpose);
                         if (result != null) {
                             result[3] = new double[1];
                             result[3][0] = EMMAX.mafc(X_ori);
@@ -980,7 +1040,9 @@ public class EMMAX {
                                 Xs_after[i][round_index] += (decomposed_array[i][j] * Xs_ori[j][round_index]);
                             }
                         }
-                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+
+                        //Using the X_ori - Archibald
+                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after, emma, Xs_ori);
 //						double[][] result=EMMAX.reg2results_lm(reg1, emma.sample_size);
                         if (result != null && Double.compare(best_vc, result[2][0]) < 0) {
                             best_P_index = var_index;
@@ -1074,7 +1136,15 @@ public class EMMAX {
                                 Xs_after[i][1] += (decomposed_array[i][j] * X_ori[j]);
                             }
                         }
-                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after);
+
+                        //Transpose X_ori to X_ori_transpose make it a vector of dimension of (sample_size x 2).- Archibald
+                        //First column is all 1
+                        double[][] X_ori_transpose = new double[emma.sample_size][2];
+                        for (int i=0; i<emma.sample_size; i++){
+                            X_ori_transpose[i][0] = 1;
+                            X_ori_transpose[i][1] = X_ori[i];
+                        }
+                        double[][] result = EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, Xs_after, emma, X_ori_transpose);
                         if (result != null) {
                             result[3] = new double[1];
                             result[3][0] = EMMAX.mafc(X_ori);
@@ -1166,13 +1236,34 @@ public class EMMAX {
     }
 
     /*
+    *  Calculating the Vonesh and Chinchilli R square
+    *   Y, Y_hat should be column matrix
+    * */
+    private static double r_square(double[] Y, double[] Y_hat, Matrix V){
+        Matrix  Ym = Matrix.columnMatrix(Y);
+        double Y_bar = Ym.mean();
+        Matrix Y_bar_col = new Matrix(Y.length, 1, Y_bar);
+
+        Matrix diff = Ym.minus(Matrix.columnMatrix(Y_hat));
+        Matrix diff_null = Ym.minus(Y_bar_array);
+
+        Matrix V_inv = V.inverse();
+
+        double numerator = diff.transpose().times(V_inv).times(diff).getElement(0,0);
+        double denominator = diff_null.transpose().times(V_inv).times(diff_null).getElement(0,0);
+
+        double R2 = 1 - numerator/denominator;
+        return R2;
+    }
+
+    /*
      * results[0]= RegressionParameters
      * results[1]= multi_reg_pvalues
      * results[2][0]=AdjustedRSquared
      * results[2][1]=RegressionStandardError
      * results[3][0]=total_reg_pvalue_F
      */
-    public static double[][] reg2results_emmax(double[] Y, double[][] Xs) {
+    public static double[][] reg2results_emmax(double[] Y, double[][] Xs, EMMA emma, double[][] X_ori) {
         int sample_size = Y.length;
         int var_num = Xs[0].length;
         OLSMultipleLinearRegression reg1 = new OLSMultipleLinearRegression();
@@ -1185,6 +1276,7 @@ public class EMMAX {
             results[2] = new double[2];
             results[2][1] = reg1.estimateRegressionStandardError();
             //remove intercept which explains more variances.
+            // TODO: but why? Comment by Archibald
             OLSMultipleLinearRegression reg2 = new OLSMultipleLinearRegression();
             reg2.setNoIntercept(true);
             double[] new_Y = new double[sample_size];
@@ -1196,7 +1288,26 @@ public class EMMAX {
                 }
             }
             reg2.newSampleData(new_Y, new_X);
-            results[2][0] = reg2.calculateAdjustedRSquared();
+
+            if (emma == null){
+                // Calculating the R2 with transformed data
+                results[2][0] = reg2.calculateAdjustedRSquared();
+            } else{
+                // Calculating Y_hat using origin X
+                double[] Y_hat = new double[sample_size];
+                for (int i= 0; i < sample_size; i++ ){
+                    Y_hat[i] = 0;
+                    for (int j= 0; j < var_num; j++ ){
+                        Y_hat[i] += results[0][j] * X_ori[i][j];
+                    }
+                }
+
+                Matrix K = new Matrix(emma.kinship_matrix);
+                Matrix Identity = Matrix.identityMatrix(sample_size);
+                Matrix V = K.times(emma.remle_vg).plus(Identity.times(emma.remle_ve));
+                results[2][0] = r_square(emma.phenotype.values, Y_hat, V);
+            }
+
             double[] residuals = reg2.estimateResiduals();
             results[3] = new double[1];
             results[3][0] = myMathLib.StatFuncs.total_reg_pvalue_F_nointercept(new_Y, residuals, var_num);
