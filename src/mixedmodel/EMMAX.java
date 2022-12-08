@@ -1245,7 +1245,7 @@ public class EMMAX {
         Matrix Y_bar_col = new Matrix(Y.length, 1, Y_bar);
 
         Matrix diff = Ym.minus(Matrix.columnMatrix(Y_hat));
-        Matrix diff_null = Ym.minus(Y_bar_array);
+        Matrix diff_null = Ym.minus(Y_bar_col);
 
         Matrix V_inv = V.inverse();
 
@@ -1289,7 +1289,7 @@ public class EMMAX {
             }
             reg2.newSampleData(new_Y, new_X);
 
-            if (emma == null){
+            if (emma == null || X_ori == null){
                 // Calculating the R2 with transformed data
                 results[2][0] = reg2.calculateAdjustedRSquared();
             } else{
