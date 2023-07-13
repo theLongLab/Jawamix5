@@ -8,7 +8,7 @@ In	its	first	release,	we	provide	9 functions.
 2. [Functions](#functions)
 3. [Commands and Options](#commandsandoptions)
 4. [Input/output	file formats](#inputoutputfile-formats)
-5. [Jawamix5 usage examples](#Jawamix5 usage examples)
+5. [Jawamix5 usage examples](#jawamix5usageexamples)
 6. [Information	for	Developers](#informationfordevelopers)
 7. [Contacts](#contacts)
 8. [Copyright](#copyrightlicensemit)
