@@ -273,11 +273,11 @@ public class JAWAMix5 {
 				System.out.println("Compute weighted IBS/RRM kinship matrix");
 				System.out.println("Usage: \n\t<-ig\tinput_genotype_file>\n\t" +
 						"<-o\toutput_prefix>\n\t" +
+						"<-wg\t weights file for SNPs]\n\t"+
 						"[-w\ttiling_window_size(bp) (df=WG)]\n\t" +
 						"[-m\tmethod (df=RRM)]\n\t" +
 						"[-maf\tmin-MAF (df=0)]\n\t" +
 						"[-scale\tmax_genotype_coding (df=2)]\n\t"+
-						"[-wg\t weights file for SNPs]\n\t"+
 						"[-v\t verbose (df=false, set to true to print out details)\n\t");
 				System.exit(0);
 			} else {
