@@ -55,6 +55,20 @@ Options:
 - -scale: maximal	value of	genotype	coding,	default	is	2.0 (corresponding	to
 the	ordinary	0,	1,	2	coding	for	hom,	het,	hom	genotypes)
 
+**kinshipwe**:	Compute	“polygenic” term, the core component of expression-directed linear mixed model (edLMM).	 
+Mandatory	parameters:
+- -ig:	input	genotype	file in	HDF5	format
+- -o:	prefix of output file
+- -wg:  expression weights file for SNPs (Please find "" as an example file in ExampleFile folder)
+
+Options:
+- -w: tiling	window	size(bp),	default	is the	whole genome (df=WG)
+- -m: method to calcuate polygenic term. RRM is available for current verion (df=RRM). 
+- -maf: cut off for SNPs. SNPs with larger MAF are selected for analysis, (df=0).
+- -scale: maximal	value of	genotype	coding,	(df=2, corresponding	to
+the	ordinary	0,	1,	2	coding	for	hom,	het,	hom	genotypes)
+- -verbose: show analysis details or not, (df=false, set to true to print out details). 
+
 **import**:	Import	genotype	file	from	.CSV format	into	HDF5	encoded	indexed	files.  
 Mandatory	parameters:
 - -ig: input	genotype	file in	plain	text	(.CSV	format)
@@ -230,6 +244,22 @@ variance	explained.
 **Output P-value	file	for	rare	variants	analysis**. For	rare variants	aggregate analysis, the	four	different	algorithms,	i.e.,	with	or	without	leveraging	potential	synthetic	association	and	with	or	without	controlling	population	structure,	will	be	done	together.	Therefore, four	sets	of	results	will	be	generated.	The	results	without	leveraging	potential	synthetic	association	will	be	the	same	as	the	standard	output	in	this	package	(like	emmax or	lm);	while	the	results	with leveraging	have	one	more	column	denoting	which	synthetic	association	the	focal	region	is	linked to.
 
 **Output	of	NAM	analysis**.	The	same	as	the	stepwise	linear	regression	output.
+
+## Jawamix5 usage examples
+1. Covert tped/tfam into hdf5 file format.
+> java	–Xmx2g	–jar -ig Example.num.csv -o Example
+
+2. Calculation of kinship matrix.
+> java	–Xmx2g	–jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
+
+3. Run GWAS analysis with EMMA eXpedited model (emmax) 
+> java	–Xmx2g	–jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
+> java	–Xmx2g	–jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEmmaxRes -ik ExampleRRM
+
+4. Run GWAS analysis under expression-directed linear mixed model (edLMM).
+> java	–Xmx2g	–jar kinshipwe -ig Example.hdf5 -o ExampleRRMwe -wg ExpressionDirectedSNPsWeights.txt -m RRM
+> java	–Xmx2g	–jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEDLMMRes -ik ExampleRRMwe
+
 
 ## Information	for	Developers
 This	section	contains	information	for	developers	who	might	want	to	look	at	the	source	code	and	modify	it	for	different	uses.	There	are	a	few	classes	in	the	package, usually	one	class	for	each	type	of	analysis,	although	there	are	a	few	small	classes	as	constructors	for	data	loading or	very
