@@ -64,11 +64,11 @@ Mandatory	parameters:
 
 Options:
 - -w: tiling	window	size(bp),	default	is the	whole genome (df=WG)
-- -m: method to calcuate polygenic term. RRM is available for current verion (df=RRM). 
+- -m: method to calcuate polygenic term. RRM is available for current verion (df=RRM).
 - -maf: cut off for SNPs. SNPs with larger MAF are selected for analysis, (df=0).
 - -scale: maximal	value of	genotype	coding,	(df=2, corresponding	to
 the	ordinary	0,	1,	2	coding	for	hom,	het,	hom	genotypes)
-- -verbose: show analysis details or not, (df=false, set to true to print out details). 
+- -verbose: show analysis details or not, (df=false, set to true to print out details).
 
 **import**:	Import	genotype	file	from	.CSV format	into	HDF5	encoded	indexed	files.  
 Mandatory	parameters:
@@ -156,7 +156,7 @@ Mandatory	parameters:
 - -w: tiling	window	size	(it	should	be	consistent	with	the	kinship	files and	must therefore be	the	same	as	specified	when	running	“kinship”	function.)
 - -ik_g:	the	global	kinship	file	(generated	by	function	“kinship”	or	any	other	user’s	methods.)
 
-**compoundX**:	refers to ILMM (Interaction-integrated Linear Mixed Model) method which run	local	variance component	analysis for the	genome based on imputting regions. To run compoundX, please refer to the source file or contact the author. 
+**compoundX**:	refers to ILMM (Interaction-integrated Linear Mixed Model) method which run	local	variance component	analysis for the	genome based on imputting regions. To run compoundX, please refer to the source file or contact the author.
 
 Mandatory	parameters:
 - -ig:	input	genotype	file	in	HDF5	format
@@ -246,7 +246,7 @@ variance	explained.
 
 **Output	of	NAM	analysis**.	The	same	as	the	stepwise	linear	regression	output.
 
-## Jawamix5 usage examples
+## <a name="jawamix5usageexamples"></a> Jawamix5 usage examples
 1. Covert tped/tfam into hdf5 file format.
 ```
 > java	–Xmx2g	–jar -ig Example.num.csv -o Example
@@ -257,7 +257,7 @@ variance	explained.
 > java	–Xmx2g	–jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
 ```
 
-3. Run GWAS analysis with EMMA eXpedited model (emmax) 
+3. Run GWAS analysis with EMMA eXpedited model (emmax)
 ```
 > java	–Xmx2g	–jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
 > java	–Xmx2g	–jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEmmaxRes -ik ExampleRRM
@@ -278,7 +278,7 @@ The	design	of	HDF5	hierarchy	is	described	as	follows:	under	the	root,	there	is	s
 
 Under	the	main	group	“genotype”,	there	are	a	number	of	subgroups	named	as “chr??”, where	the	“??”	is	a	number	denoting the	chromosome.	In	each	subgroup, there	are	two	tables:	“var_pos”:	IntArray; and	“var_mafc”:	IntArray,	storing respectively	the	position	and	minor	allele	counts.	Finally,	the	actual	genotypes	are	stored	in	the	blocks	named “position_fast”:	DoubleMatrix if	one	uses	VariantsDouble	or	ByteMatrix	if	one	uses	VariantsByte.
 
-We	have	implemented	a	few	functions	to	randomly	load	one	variant	(both	by	index	in	the	variants	list	or	by	coordinate in	the	chromosome)	or	all	variants	in	a	specified	region,	from	the	genome.	Therefore, in	theory,	the	developer	doesn’t	need	to	look	at	the	details	of	HDF5	blocks.	
+We	have	implemented	a	few	functions	to	randomly	load	one	variant	(both	by	index	in	the	variants	list	or	by	coordinate in	the	chromosome)	or	all	variants	in	a	specified	region,	from	the	genome.	Therefore, in	theory,	the	developer	doesn’t	need	to	look	at	the	details	of	HDF5	blocks.
 
 ## Contacts:
 Quan	Long, quan.long@ucalgary.ca  
