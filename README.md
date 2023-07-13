@@ -60,7 +60,7 @@ the	ordinary	0,	1,	2	coding	for	hom,	het,	hom	genotypes)
 Mandatory	parameters:
 - -ig:	input	genotype	file in	HDF5	format
 - -o:	prefix of output file
-- -wg:  expression weights file for SNPs (Please find "" as an example file in ExampleFile folder)
+- -wg:  expression weights file for SNPs (Please find "ExpressionDirectedSNPsWeights_b38.txt" as an example file in ExampleFile folder)
 
 Options:
 - -w: tiling	window	size(bp),	default	is the	whole genome (df=WG)
@@ -249,24 +249,24 @@ variance	explained.
 ## <a name="jawamix5usageexamples"></a> Jawamix5 usage examples
 1. Covert tped/tfam into hdf5 file format.
 ```
-> java	–Xmx2g	–jar -ig Example.num.csv -o Example
+java –Xmx2g	–jar -ig Example.num.csv -o Example
 ```
 
 2. Calculation of kinship matrix.
 ```
-> java	–Xmx2g	–jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
+java	–Xmx2g	–jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
 ```
 
 3. Run GWAS analysis with EMMA eXpedited model (emmax)
 ```
-> java	–Xmx2g	–jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
-> java	–Xmx2g	–jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEmmaxRes -ik ExampleRRM
+java	–Xmx2g	–jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
+java	–Xmx2g	–jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEmmaxRes -ik ExampleRRM
 ```
 
 4. Run GWAS analysis under expression-directed linear mixed model (edLMM).
 ```
-> java	–Xmx2g	–jar kinshipwe -ig Example.hdf5 -o ExampleRRMwe -wg ExpressionDirectedSNPsWeights.txt -m RRM
-> java	–Xmx2g	–jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEDLMMRes -ik ExampleRRMwe
+java	–Xmx2g	–jar kinshipwe -ig Example.hdf5 -o ExampleRRMwe -wg ExpressionDirectedSNPsWeights_b38.txt -m RRM
+java	–Xmx2g	–jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEDLMMRes -ik ExampleRRMwe
 ```
 
 
