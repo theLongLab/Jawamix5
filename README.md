@@ -8,11 +8,12 @@ In	its	first	release,	we	provide	9 functions.
 2. [Functions](#functions)
 3. [Commands and Options](#commandsandoptions)
 4. [Input/output	file formats](#inputoutputfile-formats)
-5. [Information	for	Developers](#informationfordevelopers)
-6. [Contacts](#contacts)
-7. [Copyright](#copyrightlicensemit)
-8. [Acknowledgements](#acknowledgements)
-9. [References](#references)
+5. [Jawamix5 usage examples] (#Jawamix5 usage examples)
+6. [Information	for	Developers](#informationfordevelopers)
+7. [Contacts](#contacts)
+8. [Copyright](#copyrightlicensemit)
+9. [Acknowledgements](#acknowledgements)
+10. [References](#references)
 
 ## Installation
 The	toolkit is	a	batteries-included	executable, therefore	no	installation	is	needed.	Just	copy	the	executable, jawamix5.jar, and	run	it	using	the	standard	command for	java	packages:
@@ -247,7 +248,9 @@ variance	explained.
 
 ## Jawamix5 usage examples
 1. Covert tped/tfam into hdf5 file format.
-> java	–Xmx2g	–jar -ig Example.num.csv -o Example
+'''
+java	–Xmx2g	–jar -ig Example.num.csv -o Example
+'''
 
 2. Calculation of kinship matrix.
 > java	–Xmx2g	–jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
