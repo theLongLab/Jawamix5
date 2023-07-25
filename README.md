@@ -249,24 +249,24 @@ variance	explained.
 ## <a name="jawamix5usageexamples"></a> Jawamix5 usage examples
 1. Covert tped/tfam into hdf5 file format.
 ```
-java –Xmx2g –jar import -ig Example.num.csv -o Example
+java –Xmx2g –jar jawamix5.jar import -ig Example.num.csv -o Example
 ```
 
 2. Calculation of kinship matrix.
 ```
-java –Xmx2g –jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
+java –Xmx2g –jar jawamix5.jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
 ```
 
 3. Run GWAS analysis with EMMA eXpedited model (emmax)
 ```
-java –Xmx2g –jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
-java –Xmx2g –jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEmmaxRes -ik ExampleRRM
+java –Xmx2g –jar jawamix5.jar kinship -ig Example.hdf5 -o ExampleRRM -m RRM
+java –Xmx2g –jar jawamix5.jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEmmaxRes -ik ExampleRRM
 ```
 
 4. Run GWAS analysis under expression-directed linear mixed model (edLMM).
 ```
-java –Xmx2g –jar kinshipwe -ig Example.hdf5 -o ExampleRRMwe -wg ExpressionDirectedSNPsWeights_b38.txt -m RRM
-java –Xmx2g –jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEDLMMRes -ik ExampleRRMwe
+java –Xmx2g –jar jawamix5.jar kinshipwe -ig Example.hdf5 -o ExampleRRMwe -wg ExpressionDirectedSNPsWeights_b38.txt -m RRM
+java –Xmx2g –jar jawamix5.jar emmax -ig Example.hdf5 -ip ExamplePheno.tsv -o ExampleEDLMMRes -ik ExampleRRMwe
 ```
 
 ## Information	for	Developers
