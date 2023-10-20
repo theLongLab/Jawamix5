@@ -137,6 +137,7 @@ public class SimedLMM
         final String[] z_snps_info = new String[random_term_snps_num];
         final double[] z_weights = new double[random_term_snps_num];
         final double[] phenotype_random_term = new double[genotype.sample_size];
+        final NormalDistribution STnormal = new NormalDistribution(0.0, 1.0);
         Arrays.fill(phenotype_random_term, 0.0);
         final ArrayList<String> sim_all_x_chr_pos_arrayArrayList = new ArrayList<String>();
         int random_term_snps_count = 0;
@@ -151,7 +152,7 @@ public class SimedLMM
                 final String z_pos_ID = String.valueOf(Integer.toString(z_chr)) + "," + Integer.toString(genotype.locations[chr_index][z_pos_index]);
                 if (!sim_all_x_chr_pos_arrayArrayList.contains(z_pos_ID) && snps_chr_pos_weights_map.containsKey(z_pos_ID)) {
                     z_genotype[random_term_snps_count] = genotype.load_one_variant_by_index(chr_index, z_pos_index);
-                    z_weights[random_term_snps_count] = snps_chr_pos_weights_map.get(z_pos_ID);
+                    z_weights[random_term_snps_count] = snps_chr_pos_weights_map.get(z_pos_ID) + STnormal.sample(); //add noise to gene expression weights
                     z_snps_info[random_term_snps_count] = z_pos_ID;
                     ++random_term_snps_count;
                     selected_z_snp_info_per_chr.add(z_pos_ID);
