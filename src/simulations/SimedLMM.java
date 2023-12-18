@@ -9,8 +9,15 @@ import java.util.Random;
 import java.util.HashMap;
 import org.apache.commons.math3.distribution.UniformRealDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+
+import mixedmodel.KinshipMatrix;
+import mixedmodel.MultiPhenotype;
+import mixedmodel.Phenotype;
 import mixedmodel.VariantsDouble;
 
 public class SimedLMM
@@ -504,5 +511,6 @@ public class SimedLMM
                 }
             }
         }
+        
     }
 }
