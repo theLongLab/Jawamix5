@@ -1,7 +1,7 @@
 # JAWAMix5	Users	Manual	r1.0.0
-JAWAMix5	stands	for	HDF**5**-based	**JA**va	implementation	of	**W**hole	genome **A**ssociation	studies	using	**Mix**ed	model.	The	motivation	of	developing	JAWAMix5 is	to	provide	a	platform-independent	toolkit for	mixed	model-based association	mapping that	is	scalable	for	very	large	dataset. We	intend	to	offer	long-term maintenance	for	JAWAMix5	and	continue	adding	our	new	developments	into	it.
+JAWAMix5	stands	for	HDF**5**-based	**JA**va	implementation	of	**W**hole	genome **A**ssociation	studies	using	**Mix**ed	model.	The	motivation	of	developing	JAWAMix5 is	to	provide	a	platform-independent	toolkit for	mixed	model-based association	mapping that	is	scalable	for	very	large	datasets. We	intend	to	offer	long-term maintenance	for	JAWAMix5	and	continue	adding	our	new	developments	into	it.
 
-In	its	first	release,	we	provide	9 functions.
+In	its	first	release,	we have	provided	9 functions.
 
 ## Contents
 1. [Installation](#installation)
