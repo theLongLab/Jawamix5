@@ -130,7 +130,7 @@ public class RareAnalyzerSynthetic {
 					// apply EMAAX 
 					double[][] coverted_X=EMMAX.apply_array(intsept, collapsed, decomposed_array);
 					if(coverted_X==null)continue;
-					double[][] result_emmax=EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, coverted_X);
+					double[][] result_emmax=EMMAX.reg2results_emmax(emma.phenotype.new_Y_4emmax, coverted_X, null, null);
 					if(result_emmax!=null){
 						result_emmax[3]=new double[1];
 						result_emmax[3][0]=mafc;
